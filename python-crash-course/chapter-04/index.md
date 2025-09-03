@@ -151,4 +151,183 @@ print(squares)      # [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
 
 ## 4.4 使用列表的一部分
 
+在 Python 中处理列表的部分元素成为切片。
+
 ### 4.4.1 切片
+
+要创建切片，可指定要使用的第一个元素和最后一个元素的索引。
+
+我们可以使用切片语法生成列表的任意子集。
+
+```python
+# 切片
+players = ['charles', 'martina', 'michael', 'florence', 'eli']
+print(players[0:3])         # ['charles', 'martina', 'michael']
+```
+
+如果没有指定第一个索引，Python 将自动从第一个元素开始：
+
+```python
+
+# 省略第一个索引
+players = ['charles', 'martina', 'michael', 'florence', 'eli']
+print(players[:4])              # ['charles', 'martina', 'michael', 'florence']
+```
+
+要让切片终止于列表末尾，可省略切片的结尾索引：
+
+```python
+# 省略结尾索引
+players = ['charles', 'martina', 'michael', 'florence', 'eli']
+print(players[2:])          # ['michael', 'florence', 'eli']
+```
+
+也可以使用负数索引：
+
+```python
+# 负数索引
+players = ['charles', 'martina', 'michael', 'florence', 'eli']
+print(players[-3:])          # ['michael', 'florence', 'eli']
+```
+
+类似 range 函数，切片语法也支持第三个参数，表示步长，即在范围索引内，每相隔多少索引取一个元素
+
+```python
+# 指定步长
+players = ['charles', 'martina', 'michael', 'florence', 'eli']
+print(players[::2])          # ['charles', 'michael', 'eli']
+```
+
+### 4.4.2 遍历切片
+
+可使用 for 循环遍历切片。
+
+```python
+# 遍历切片
+players = ['charles', 'martina', 'michael', 'florence', 'eli']
+print("There are the first three players on my team:")
+for player in players[:3]:
+    print(player.title())
+```
+
+### 4.4.3 复制列表
+
+要复制列表，可以创建一个覆盖列表全部范围的切片。
+
+```python
+# 李泳切片复制列表
+my_foods = ['pizza', 'falafel', 'carrot cake']
+friend_foods = my_foods[:]
+
+print("My favorite foods are:")
+print(my_foods)             # ['pizza', 'falafel', 'carrot cake']
+
+print("\nMy friend's favorite foods are:")
+print(friend_foods)         # ['pizza', 'falafel', 'carrot cake']
+```
+
+为了核实切片确实生成了一个新的列表，我们做如下修改：
+
+```python
+# 确认切片生成的列表是一个新的切片
+my_foods = ['pizza', 'falafel', 'carrot cake']
+friend_foods = my_foods[:]
+
+my_foods.append('cannoli')
+friend_foods.append('ice cream')
+
+print("My favorite foods are:")
+print(my_foods)         # ['pizza', 'falafel', 'carrot cake', 'cannoli']
+
+print("\nMy friend's favorite foods are:")
+print(friend_foods)     # ['pizza', 'falafel', 'carrot cake', 'ice cream']
+```
+
+## 元组
+
+列表是可以修改的序列。而不可修改的列表成为元祖。
+
+### 4.5.1 定义元组
+
+元组看起来像列表一样，只不过使用圆括号标识。定义元组后，可以使用索引来访问元素。
+
+```python
+# 定义元组
+dimensions = (200, 50)
+print(dimensions[0])        # 200
+print(dimensions[1])        # 50
+```
+
+如果尝试修改元组中的元素，将出发 Python 报错：
+
+```python
+# 修改元组中的元素
+dimensions = (200, 50)
+dimensions[0] = 100
+
+# Traceback (most recent call last):
+#   File "my-python-journey\python-crash-course\chapter-04\dimensions.py", line 8, in <module>
+#     dimensions[0] = 100
+#     ~~~~~~~~~~^^^
+# TypeError: 'tuple' object does not support item assignment
+```
+
+只定义有一个元素的元组，为了与表达式区分，元组必须有个逗号：
+
+```python
+my_tuple = (200,)
+```
+
+### 3.5.2 遍历元组中的所有值
+
+像列表一样，可以使用 for 循环遍历列表：
+
+```python
+# 使用 for 循环遍历元组
+dimensions = (200, 50)
+for dimension in dimensions:
+    print(dimension)
+```
+
+### 4.5.3 修改元组变量
+
+虽然不能修改元组的元素，但是可以给表示元组的变量赋值：
+
+```python
+# 给元组变量赋值
+dimensions = (200, 50)
+print("Original dimensions:")
+for dimension in dimensions:
+    print(dimension)        # 200 50
+
+dimensions = (400, 100)
+print("\nModified dimensions:")
+for dimension in dimensions:
+    print(dimension)        # 400 100
+```
+
+## 4.6 设置代码格式
+
+### 4.6.1 格式设置指南
+
+### 4.6.2 缩进
+
+### 4.6.3 行长
+
+建议每行不超过 80 个字符。
+
+### 4.6.4 空行
+
+可使用空行分隔程序中的不同部分。
+
+### 4.6.5 其他格式设置指南
+
+更多格式设置指南见 PEP 8 (Python Enhancement Proposal, Python 增强提案)
+
+## 4.7 小结
+
+1. 遍历列表
+2. 创建简单的数值列表
+3. 切片
+4. 元组
+5. 代码格式设置
