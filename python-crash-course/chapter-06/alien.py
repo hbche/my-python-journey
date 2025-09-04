@@ -28,4 +28,7 @@
 # print(f"The alien is {alien_0['color']}")                  # The alien is yellow
 
 # 删除字典中的键值对
-alien_0 = {}
+alien_0 = {"color": "green", "points": 5}
+print(alien_0)          # {'color': 'green', 'points': 5}
+del alien_0['color']
+print(alien_0)          # {'points': 5}
