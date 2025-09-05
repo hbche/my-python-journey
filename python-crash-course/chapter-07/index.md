@@ -207,3 +207,75 @@ while current_number <= 10:
 致 break 语句得以执行。
 
 ## 7.3 使用 while 循环处理列表和字典
+
+### 7.3.1 在列表之间移动元素
+
+```python
+# 首先创建一个待验证的用户列表
+unconfirmed_users = ['alice', 'brian', 'candace']
+# 创建一个空的用于存储经过验证的用户列表
+confirmed_users = []
+# 利用 while 循环移动列表
+while unconfirmed_users:
+    # 弹出未验证列表中最后的用户
+    current_user = unconfirmed_users.pop()
+    # 模拟验证过程
+    print(f"Verifying user: {current_user.title()}")
+    # 将验证过的用户添加到已验证列表中
+    confirmed_users.append(current_user)
+print("\nThe following users have been confirmed:")
+# 显示所有已验证的用户
+for confirmed_user in confirmed_users:
+    print(confirmed_user.title())
+```
+
+### 7.3.2 删除为特定值的所有列表元素
+
+我们之前学过使用 remove() 方法可以从列表中移除制定的值，但是每次只能移除最先匹配的元素；我们接下来学习使用 while 循环使用 remove 移除所有特定值的元素。
+
+```python
+# 使用while循环从列表中移除所有特定值
+pets = ['dog', 'cat', 'dog', 'goldfish', 'cat', 'rabbit', 'cat']
+print(pets)
+
+# 使用 while 循环移除列表中的所有猫，直到列表中不再有猫为止
+while 'cat' in pets:
+    pets.remove('cat')
+print(pets)
+```
+
+### 7.3.3 使用用户输入填充字典
+
+```python
+# 使用while循环录入用户输入作为字典存储
+# 创建空字典用于存储用户的输入
+responses = {}
+
+# 声明一个循环标志
+polling_active = True
+
+while polling_active:
+    # 提示用户输入姓名和喜欢的山
+    name = input("\nWhat is your name? ")
+    mountain = input("Which mountain would you like to climb someday? ")
+
+    # 将用户的输入存储在字典中
+    responses[name] = mountain
+
+    # 询问用户是否继续
+    repeat = input("Would you like to let another person respond? (yes/no) ")
+    if repeat.lower() == 'no':
+        polling_active = False
+
+
+# 调查结束，显示结果
+print("\n--- Poll Results ---")
+for name, mountain in responses.items():
+    print(f"{name} would like to climb {mountain}.")
+```
+
+## 7.4 小结
+
+1. 使用 input () 录入用户输入
+2. while 循环、break 语句、continue 语句
+3. while 循环遍历列表、移动列表、删除特定元素
