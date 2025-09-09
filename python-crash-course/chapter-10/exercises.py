@@ -117,78 +117,177 @@
 # for dog in dogs:
 #     print(f"Welcome, {dog}!")
 
-# 练习10.10：常见单词　访问古登堡计划，找一些你想分析的图书。
-# 下载这些作品的文本文件或将浏览器中的原始文本复制到文本文件中。
-# 可以使用方法count()来确定特定的单词或短语在字符串中出现了多少次。例如，下面的代码计算'row'在一个字符串中出现了多少次：
+# # 练习10.10：常见单词　访问古登堡计划，找一些你想分析的图书。
+# # 下载这些作品的文本文件或将浏览器中的原始文本复制到文本文件中。
+# # 可以使用方法count()来确定特定的单词或短语在字符串中出现了多少次。例如，下面的代码计算'row'在一个字符串中出现了多少次：
 
-# 编写一个程序，读取你在古登堡计划中获取的文件，并计算单词'the'在每个文件中分别出现了多少次。
-# 这里计算得到的结果并不准确，因为诸如'then'和'there'等单词也被计算在内了。
-# 请尝试计算'the'（包含空格）出现的次数，看看结果相差多少。
-from pathlib import Path
+# # 编写一个程序，读取你在古登堡计划中获取的文件，并计算单词'the'在每个文件中分别出现了多少次。
+# # 这里计算得到的结果并不准确，因为诸如'then'和'there'等单词也被计算在内了。
+# # 请尝试计算'the'（包含空格）出现的次数，看看结果相差多少。
+# from pathlib import Path
 
-def count_word_by_count(file, word):
-    """统计一个单词在文件中出现了多少次"""
-    
-    path = Path(file)
-    contents = path.read_text(encoding='utf8')
-    word_count = contents.count(word)
-    print(f"The file {path} has {word_count} \"{word}\".")
-    
-# def count_word_by_equals(file, word):
-#     """根据严格相等进行统计"""
+# def count_word_by_count(file, word):
+#     """统计一个单词在文件中出现了多少次"""
     
 #     path = Path(file)
 #     contents = path.read_text(encoding='utf8')
-#     words = contents.split()
-#     word_count = 0
-#     for current_word in words:
-#         if current_word.strip() == word and len(current_word.strip()) == len(word):
-#             word_count += 1
+#     word_count = contents.count(word)
 #     print(f"The file {path} has {word_count} \"{word}\".")
+    
+# # def count_word_by_equals(file, word):
+# #     """根据严格相等进行统计"""
+    
+# #     path = Path(file)
+# #     contents = path.read_text(encoding='utf8')
+# #     words = contents.split()
+# #     word_count = 0
+# #     for current_word in words:
+# #         if current_word.strip() == word and len(current_word.strip()) == len(word):
+# #             word_count += 1
+# #     print(f"The file {path} has {word_count} \"{word}\".")
 
-def count_word_by_equals(file, word):
-    """
-    统计文件中指定单词的出现次数（完全匹配）
+# def count_word_by_equals(file, word):
+#     """
+#     统计文件中指定单词的出现次数（完全匹配）
     
-    参数:
-        file (str): 文件名
-        word (str): 要统计的单词
+#     参数:
+#         file (str): 文件名
+#         word (str): 要统计的单词
     
-    返回:
-        int: 单词出现的次数
-    """
-    count = 0
-    try:
-        with open(file, 'r', encoding='utf-8') as f:
-            for line in f:
-                # 将行拆分为单词列表（按空格分割）
-                words_in_line = line.strip().split()
-                # 统计完全匹配的单词
-                count += words_in_line.count(word)
-            print(f"The file {file} has {count} \"{word}\".")
-        return count
-    except FileNotFoundError:
-        print(f"错误：文件 '{file}' 未找到！")
-        return 0
-    except Exception as e:
-        print(f"读取文件时发生错误：{e}")
-        return 0
+#     返回:
+#         int: 单词出现的次数
+#     """
+#     count = 0
+#     try:
+#         with open(file, 'r', encoding='utf-8') as f:
+#             for line in f:
+#                 # 将行拆分为单词列表（按空格分割）
+#                 words_in_line = line.strip().split()
+#                 # 统计完全匹配的单词
+#                 count += words_in_line.count(word)
+#             print(f"The file {file} has {count} \"{word}\".")
+#         return count
+#     except FileNotFoundError:
+#         print(f"错误：文件 '{file}' 未找到！")
+#         return 0
+#     except Exception as e:
+#         print(f"读取文件时发生错误：{e}")
+#         return 0
     
-def count_word_by_equals_with_line(file, word):
-    """根据每行严格相等进行统计"""
+# def count_word_by_equals_with_line(file, word):
+#     """根据每行严格相等进行统计"""
     
-    path = Path(file)
-    contents = path.read_text(encoding='utf8')
-    lines = contents.splitlines()
+#     path = Path(file)
+#     contents = path.read_text(encoding='utf8')
+#     lines = contents.splitlines()
     
-    word_count = 0
-    for line in lines:
-        words = line.split()  
-        for current_word in words:
-            if current_word.strip() == word:
-                word_count += 1 
-    print(f"The file {path} has {word_count} \"{word}\".")
+#     word_count = 0
+#     for line in lines:
+#         words = line.split()  
+#         for current_word in words:
+#             if current_word.strip() == word:
+#                 word_count += 1 
+#     print(f"The file {path} has {word_count} \"{word}\".")
     
-count_word_by_count('alice.txt', 'the')      # The file alice.txt has 2312 "the".
-count_word_by_equals('alice.txt', 'the')      # The file alice.txt has 2312 "the".
-count_word_by_equals_with_line('alice.txt', 'the')      
+# count_word_by_count('alice.txt', 'the')      # The file alice.txt has 2312 "the".
+# count_word_by_equals('alice.txt', 'the')      # The file alice.txt has 2312 "the".
+# count_word_by_equals_with_line('alice.txt', 'the')      
+
+# # 练习10.11：喜欢的数　编写一个程序，提示用户输入自己喜欢的数，并使用json.dumps()将这个数存储在文件中。
+# # 再编写一个程序，从文件中读取这个值，并打印如下消息。　　I know your favorite number! It's _____.
+
+# # 练习10.12：记住喜欢的数　将你在完成练习10.11时编写的两个程序合而为一。
+# # 如果存储了用户喜欢的数，就向用户显示它，否则提示用户输入自己喜欢的数并将其存储在文件中。
+# # 运行这个程序两次，看看它是否像预期的那样工作
+
+# import json
+# from pathlib import Path
+
+# def store_favorite_number():
+#     """将 favorite number 存储到json文件中"""
+
+#     path = Path("favorite_number.json")
+#     favorite_number_string = input("What is your favorite number? ")
+#     favorite_number = int(favorite_number_string)
+#     path.write_text(json.dumps(favorite_number))
+#     print("When you come back, I will show your favorite number.")
+
+# def  get_favorite_number():
+#     """从json文件中读取favorite number"""
+
+#     path = Path("favorite_number.json")
+#     if path.exists():
+#         content = path.read_text()
+#         favorite_number = json.loads(content)
+#         print(f"I know your favorite number! It's {favorite_number}")
+#     else:
+#         store_favorite_number()
+    
+
+# get_favorite_number()
+
+
+# # 练习10.13：用户字典　示例remember_me.py只存储了一项信息——用户名。
+# # 请扩展该示例，让用户同时提供另外两项信息，再将收集到的所有信息存储到一个字典中。
+# # 使用json.dumps()将这个字典写入文件，并使用json.loads()从文件中读取它。
+# # 打印一条摘要消息，指出程序记住了有关用户的哪些信息。
+# from pathlib import Path
+# import json
+
+# def store_user_info():
+#     """存储用户信息字典"""
+
+#     path = Path('user-info.json')
+#     print("Tell me something, I will show when you come back.")
+#     name = input("What is your name? ")
+#     age = input("How old are you? ")
+#     address = input("Where are you live? ")
+#     user_info = {
+#         "name": name,
+#         "age": int(age),
+#         "address": address,
+#         }
+#     contents = json.dumps(user_info)
+#     path.write_text(contents)
+
+# def get_user_info():
+#     """读取用户信息"""
+#     path = Path('user-info.json')
+#     if path.exists():
+#         contents = path.read_text()
+#         user_info = json.loads(contents)
+#         print(f"Hello, {user_info['name'].title()}! I know somethings about you. You are {user_info['age']} years old, and you live {user_info['address']}.")
+#     else:
+#         store_user_info()
+
+# get_user_info()
+
+# 练习10.14：验证用户　最后一个remember_me.py版本假设用户要么已输入其用户名，要么是首次运行该程序。
+# 我们应修改这个程序，以防当前用户并非上次运行该程序的用户。
+# 为此，在greet_user()中打印欢迎用户回来的消息之前，询问他用户名是否是对的。
+# 如果不对，就调用get_new_username()让用户输入正确的用户名。
+
+from pathlib import Path
+import json
+
+def greet_user():
+    """向用户问候"""
+
+    path = Path("username.json")
+    your_name = input("What is your name? ")
+    if path.exists():
+        contents = path.read_text()
+        username = json.loads(contents)
+        if your_name != username:
+            get_new_username(path, your_name)
+        else:
+            print(f"Welcome back, {username}!")
+    else:
+        get_new_username(path, your_name)
+
+def get_new_username(path, username):
+    contents = json.dumps(username)
+    path.write_text(contents)
+    print("I remember your name, when you come back, I will greet to you.")
+
+greet_user()

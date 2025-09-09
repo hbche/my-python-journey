@@ -449,9 +449,67 @@ print(numbers)
 会在程序停止运行时丢失。
 
 ```python
+from pathlib import Path
+import json
 
+def greet_user():
+    """
+    问候用户，并指出其名字
+    """
+    path = Path('username.json')
+    if path.exists():
+        contents = path.read_text()
+        username = json.loads(contents)
+        print(f"Welcome back, {username}!")
+    else:
+        username = input("What is your name? ")
+        path.write_text(json.dumps(username))
+        print(f"We'll remember you when you come back, {username}!")
+
+greet_user()
 ```
 
 ### 10.4.3 重构
 
+我们经常会遇到这样的情况：虽然代码能够正确地运行，但还可以将其换分为一系列完成具体工作的函数来进行改进。这样的过程成为**重构**。重构让代码更清晰、更易于理解、更易于扩展。
+
+
+``` python
+from pathlib import Path
+import json
+
+def get_stored_username():
+    """
+    如果存储了用户名，就获取它
+    """
+    path = Path('username.json')
+    if path.exists():
+        contents = path.read_text()
+        username = json.loads(contents)
+        return username
+    return None
+
+def greet_user():
+    """
+    问候用户，并指出其名字
+    """
+    path = Path('username.json')
+    username = get_stored_username()
+    if username:
+        print(f"Welcome back, {username}!")
+    else:
+        username = input("What is your name? ")
+        path.write_text(json.dumps(username))
+        print(f"We'll remember you when you come back, {username}!")
+
+greet_user()
+```
+
 ## 10.5 小结
+
+1. 读取文件
+2. 写入文件
+3. 解析json文件
+4. 存储为json文件
+5. 文件相关的异常处理
+6. 文件统计
