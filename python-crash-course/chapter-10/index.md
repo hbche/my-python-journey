@@ -327,6 +327,9 @@ def count_words(file):
 
     path = Path(file)
     try:
+        # 此处指定了read_text的编码方式。
+        # 如果系统的默认编码与要读取的文件的编码不一致，参数encoding必不可少。
+        # 如果要读取的文件不是在你的系统中创建的，这种情况更容易发生。
         contents = path.read_text(encoding='utf8')
     except FileNotFoundError:
         print(f"Sorry, the file {path} dosen't exist.")
@@ -344,6 +347,9 @@ for book in bookds:
 # The file moby_dick.txt has 215838 words.
 # The file siddhartha.txt has 42186 words.
 ```
+
+> 注意： 如果系统的默认编码与要读取的文件的编码不一致，参数 encoding 必不可少。
+> 如果要读取的文件不是在你的系统中创建的，这种情况更容易发生。
 
 ### 10.3.8 静默失败
 
@@ -471,10 +477,11 @@ greet_user()
 
 ### 10.4.3 重构
 
-我们经常会遇到这样的情况：虽然代码能够正确地运行，但还可以将其换分为一系列完成具体工作的函数来进行改进。这样的过程成为**重构**。重构让代码更清晰、更易于理解、更易于扩展。
+我们经常会遇到这样的情况：虽然代码能够正确地运行，但还可以将其换分为一系列完成具
+体工作的函数来进行改进。这样的过程成为**重构**。重构让代码更清晰、更易于理解、更
+易于扩展。
 
-
-``` python
+```python
 from pathlib import Path
 import json
 
@@ -509,7 +516,7 @@ greet_user()
 
 1. 读取文件
 2. 写入文件
-3. 解析json文件
-4. 存储为json文件
+3. 解析 json 文件
+4. 存储为 json 文件
 5. 文件相关的异常处理
 6. 文件统计

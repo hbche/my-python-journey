@@ -34,13 +34,15 @@
 
 #### 第十一章 [测试代码](./chapter-11/index.md)
 
+### 第二部分 项目
+
 #### 第十二章 [外星人入侵](./chapter-12/index.md)
 
-#### 第十三章 [数据可视化](./chapter-13/index.md)
+#### 第十五章 [数据可视化 - 生成数据](./chapter-15/index.md)
 
-#### 第十四章 [Web 应用程序](./chapter-14/index.md)
+#### 第十六章 [数据可视化 - 下载数据](./chapter-16/index.md)
 
-### 第二部分 项目
+#### 第十七章 [Web 应用程序](./chapter-17/index.md)
 
 ## 读书心得
 
