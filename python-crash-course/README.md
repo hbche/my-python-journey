@@ -42,7 +42,9 @@
 
 #### 第十六章 [数据可视化 - 下载数据](./chapter-16/index.md)
 
-#### 第十七章 [Web 应用程序](./chapter-17/index.md)
+#### 第十七章 [数据可视化 - 使用 API](./chapter-17/index.md)
+
+#### 第十八章 [Web 应用程序](./chapter-17/index.md)
 
 ## 读书心得
 
