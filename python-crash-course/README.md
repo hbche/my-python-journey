@@ -44,7 +44,11 @@
 
 #### 第十七章 [数据可视化 - 使用 API](./chapter-17/index.md)
 
-#### 第十八章 [Web 应用程序](./chapter-17/index.md)
+#### 第十八章 [Web 应用程序 - Django 入门](./chapter-18/index.md)
+
+#### 第十九章 [Web 应用程序 - 用户账户](./chapter-19/index.md)
+
+#### 第二十章 [Web 应用程序 - 设置应用程序的样式并部署](./chapter-20/index.md)
 
 ## 读书心得
 

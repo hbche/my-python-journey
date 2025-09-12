@@ -37,8 +37,9 @@
 
 #### Web 开发
 
-1. 《Flask Web 开发：基于 Python 的 web 应用开发实战（第 2 版）》
-2. 《Django 企业开发实战：高效 Python Web 框架指南》
+1. 《Flask Web 开发实践：入门、进阶与原理解析》
+2. 《Flask Web 开发：基于 Python 的 web 应用开发实战（第 2 版）》
+3. 《Django 企业开发实战：高效 Python Web 框架指南》
 
 #### 网络编程
 
