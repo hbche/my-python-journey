@@ -91,3 +91,7 @@ for tshirt in ("%s %s" % (c, s) for c in colors for s in sizes):
 ```
 
 ## 2.3 元组不仅仅是不可变的列表
+
+### 2.3.1 元组和记录
+
+### 2.3.2 元组拆包
