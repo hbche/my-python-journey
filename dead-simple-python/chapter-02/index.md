@@ -451,5 +451,45 @@ Mypy 是一个不同寻常的静态分析器，因为它完全专注于类型注
 
 ### 2.9.1 autopep8
 
+默认情况下 autopepe8 只会修复空格，但是如果我们传递 `--aggressive` 参数，它就会做出更多改变。实际上如果我们传递这个参数两次，它做出的改变会更多。
+
+```bash
+python -m autopep8 --in-place --aggressive --aggressive filetochange.py
+```
 
 ### 2.9.2 Black
+
+Black 相较于 autopep8 更加简单：它假设我们完全遵循 PEP8，因此它不会提供太多的选项让我们干到困惑。
+
+要使用它格式化文件，请传递文件名：
+
+```bash
+python -m black filetochange.py
+```
+
+## 2.10 测试框架
+
+Python 主要的 3 个测试框架：Pytest、nose2 和 unittest6。
+
+## 2.11 代码编辑器一览
+
+### 2.11.1 IDLE
+
+### 2.11.2 Emacs 和 Vim
+
+### 2.11.3 PyCharm
+
+### 2.11.4 Visual Studio Code
+
+### 2.11.5 Sublime Text
+
+### 2.11.6 Spyder
+
+## 2.12 小结
+
+1. Python 解释器安装
+2. Python 虚拟环境和 pip
+3. Python PEP8
+4. Python 代码质量控制 - 静态分析工具 Pylint
+5. Python 格式化 - autopep8、Black
+6. Python IDE
