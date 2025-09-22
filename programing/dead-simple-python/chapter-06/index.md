@@ -391,3 +391,118 @@ call_something_else(say_hi, name='Bob') # 关键字参数
 ```
 
 ## 6.7 仅关键字参数
+
+可以使用可选参数将一些关键字参数转换为仅关键字参数，仅关键字参数是 PEP 3102 中引
+入的。这些参数不能作为位置参数传递值，而只能作为关键字参数。
+
+```python
+# 使用可选参数限制函数只能传递关键字参数
+import random
+
+def roll_dice(*, dice=1, sides=6):
+    # 此处使用了未命名的可选参数*，以确保参数列表中该可变参数之后的每个参数都只能通过名称来访问。
+    return tuple(random.randint(1, sides) for _ in range(dice))
+
+dice_cup = roll_dice(sides=6, dice=2)
+print(dice_cup)
+```
+
+以上代码使用了未命名的可选参数\*，以确保参数列表中该可变参数之后的每个参数都只能
+通过名称来访问。如果调用者传入太多的位置参数，则会引发 TypeError。这会影响使用方
+式，现在只能使用关键字参数。
+
+使用位置参数则会报错：
+
+```python
+# 使用位置参数
+dice_cup = roll_dice(6, 2)
+print(dice_cup)
+```
+
+错误信息：
+
+```bash
+TypeError: roll_dice() takes 0 positional arguments but 2 were given
+```
+
+### 6.7.1 仅位置参数
+
+从 Python3.8 开始，还可以定义仅位置参数。当参数名称不明确或未来可能改变时，这很
+有用，这意味着任何将其用作关键字参数的代码未来都可能发生变化。
+
+位置参数必须始终位于参数列表的开头。在参数列表中使用斜线(/)即可将斜线前面的所有
+参数指定为仅位置参数：
+
+```python
+# 限制dice参数只能通过位置参数传递
+import random
+
+def roll_dice(dice=1, /, sides=6):
+    """使用斜杠标识前面的参数指定为仅位置参数，后面的参数即可为位置参数也可谓关键字参数"""
+
+    return tuple(random.randint(1, sides) for _ in range(dice))
+```
+
+以下是不同的调用方式：
+
+```python
+# 都传递位置参数
+dice_cup1 = roll_dice(4, 20)            # dice=4, sides=20
+# 仅传入第一个位置参数，sides为默认值
+dice_cup2 = roll_dice(4)                # dice=4, sides=6
+# 位置参数只用默认值，sides使用关键字参数
+dice_cup3 = roll_dice(sides=20)         # dices=4, sides=20
+# 位置参数+关键字参数
+dice_cup4 = roll_dice(4, sides=20)      # dices=4, sides=20
+```
+
+以上调用都是等效的，如果试图通过关键字参数指定 dice 参数，会报错：
+
+```python
+dice_cup4 = roll_dice(dice=4, sides=20)
+```
+
+错误信息：
+
+```bash
+TypeError: roll_dice() got some positional-only arguments passed as keyword arguments: 'dice'
+```
+
+### 6.7.2 参数类型
+
+```python
+def func(pos_only=None, /, pos_kw=None, *, kw_only=None):
+```
+
+参数 pos_only 是仅位置参数，因为它位于斜线(/)标记之前。任何仅位置参数都必须首先
+出现在参数列表中。由于此参数具有默认值，因此它是可选的。但是，如果想传递一个实参
+给它，则这个实参必须是传递给函数的第一个位置参数，否则将引发 TypeError。
+
+下一个参数是 pos_kw，它可以是位置参数或关键字参数，位于任何仅位置参数和显现(/)标
+记之后。
+
+最后，星号（\*）标记之后的参数是 kw_only，它是一个关键字参数。在这个例子中，如果
+函数接收到两个以上的位置参数，将会引发 TypeError。
+
+## 6.8 嵌套函数
+
+有时候，我们希望在函数内部复用逻辑，可以在函数中嵌套函数。
+
+我们可以使用嵌套函数来改进 roll_dice() 的递归版本：
+
+```python
+def roll_dice(sides, dice):
+    """递归实现掷骰子"""
+    # 嵌套函数
+    def roll():
+        return random.randint(1, sides)
+
+    if dice < 1:
+        return ()
+    return (roll(), ) + roll_dice(sides, dice-1)
+```
+
+## 6.9 闭包
+
+可以创建一个函数，用它构建并返回一种称为闭包的对象，闭包包含一个或多个 nonlocal
+名称。

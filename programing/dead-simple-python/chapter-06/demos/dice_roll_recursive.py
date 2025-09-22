@@ -2,10 +2,14 @@ import random
 
 def roll_dice(sides, dice):
     """递归实现掷骰子"""
+    # 嵌套函数
+    def roll():
+        return random.randint(1, sides)
+    
     if dice < 1:
         return ()
-    roll = random.randint(1, sides)
-    return (roll, ) + roll_dice(sides, dice-1)
+    
+    return (roll(), ) + roll_dice(sides, dice-1)
 
 
 print("Roll for initiative...")
