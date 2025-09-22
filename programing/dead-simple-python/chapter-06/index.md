@@ -506,3 +506,217 @@ def roll_dice(sides, dice):
 
 可以创建一个函数，用它构建并返回一种称为闭包的对象，闭包包含一个或多个 nonlocal
 名称。
+
+```python
+import random
+
+# 使用闭包重写掷骰子
+def make_dice_cup(sides=6, dice=1):
+    def roll():
+        return tuple(random.randint(1, sides) for _ in range(dice))
+    return roll
+
+roll_for_damage = make_dice_cup(sides=8, dice=5)
+damage = roll_for_damage()
+print(damage)
+```
+
+使用闭包时需要小心，因为很容易违反函数式编程的规则。如果闭包有能力改变它所封闭的
+值，它就变成了一种事实上的对象，而且是一个很难调试的对象！
+
+### 6.9.1 带闭包的递归
+
+以下是一个经典的带闭包递归的错误示例：
+
+```python
+import random
+# 使用待递归的闭包实现掷骰子
+def make_dice_cup(sides=6, dice=1):
+
+    def roll():
+        nonlocal dice
+        if dice < 1:
+            return ()
+        dice -= 1
+        return (random.randint(1, sides), ) + roll()
+
+    return roll
+
+dice_cup = make_dice_cup(sides=8, dice=5)
+damage1 = dice_cup()
+print(damage1)
+damage2 = dice_cup()
+print(damage2)
+```
+
+由于返回的闭包都共用外层函数的参数，在经过一轮调用之后，由于闭包直接对外层函数的
+dice 参数做修改，所以后续调用中 dice 都为 0，导致后续闭包的调用返回的都是 `()`
+空元祖。
+
+为了实现一个递归闭包，需要在闭包上使用一个可选参数。
+
+```python
+import random
+# 使用待递归的闭包实现掷骰子
+def make_dice_cup(sides=6, dice=1):
+
+    def roll(dice=dice):
+        if dice < 1:
+            return ()
+        return (random.randint(1, sides), ) + roll(dice - 1)
+
+    return roll
+
+dice_cup = make_dice_cup(sides=8, dice=5)
+damage1 = dice_cup()
+print(damage1)
+damage2 = dice_cup()
+print(damage2)
+```
+
+这个版本使用 nonlocal 名称 dice 作为新的局部参数 dice 的默认值。
+
+### 6.9.2 有状态闭包
+
+虽然通常最好将闭包编写为纯函数，但有时也有必要创建有状态闭包——在调用之间保留一些
+状态以供闭包使用。一般来说，除非没有其他解决方案，否则应避免使用有状态闭包。
+
+## 6.10 lambda 表达式
+
+mbda 表达式是由表达式组成的匿名（无名）函数，其结构如下：
+
+```python
+lambda x, y: x + y
+```
+
+冒号的左侧是参数列表，如果不想接收任何参数，则可以省略参数列表。冒号的右侧是
+return 表达式，lambda 表达式会对其求值并隐式地返回结果。要使用 lambda 表达式，就
+必须将其绑定到一个名称，可以通过赋值或将其作为参数传递给另一个函数。
+
+```python
+# lambda表达式基础
+add = lambda x, y: x + y
+answer = add(20, 22)
+print(answer)       # 42
+```
+
+### 6.10.1 为什么 lambda 表达式很有用？
+
+我们先来看一个没有使用 lambda 表达式的案例：
+
+```python
+import random
+
+# 模拟文本大冒险中的玩家角色
+# 声明全局变量
+# 当前经验值
+xp = 10
+# 当前血条
+health = 10
+def attempt(action, min_roll, outcome):
+    """
+    action: 表示执行某种操作
+    min_roll: 表示操作的下限
+    outcome: 表示后续操作
+    """
+    global xp, health
+    roll = random.randint(1, 20)
+    if roll >= min_roll:
+        print(f"{action} SUCCESS.")
+        result = True
+    else:
+        print(f"{action} FAILED.")
+        result = False
+
+    scores = outcome(result)
+    health = health + scores[0]
+    print(f"Health is now {health}")
+    xp = xp + scores[1]
+    print(f"Experience is now {xp}")
+
+    return result
+
+def eat_bread(success):
+    if success:
+        return (1, 0)
+    else:
+        return (-1, 0)
+
+def fight_ice_weasel(success):
+    if success:
+        return (0, 10)
+    else:
+        return (-10, 10)
+
+attempt('Eating bread', 5, eat_bread)
+attempt('Fighting ice weasel', 15, fight_ice_weasel)
+```
+
+下面使用 lambda 表达式重写上面的代码：
+
+```python
+import random
+
+# 模拟文本大冒险中的玩家角色
+# 声明全局变量
+# 当前经验值
+xp = 10
+# 当前血条
+health = 10
+def attempt(action, min_roll, outcome):
+    """
+    action: 表示执行某种操作
+    min_roll: 表示操作的下限
+    outcome: 表示后续操作
+    """
+    global xp, health
+    roll = random.randint(1, 20)
+    if roll >= min_roll:
+        print(f"{action} SUCCESS.")
+        result = True
+    else:
+        print(f"{action} FAILED.")
+        result = False
+
+    scores = outcome(result)
+    health = health + scores[0]
+    print(f"Health is now {health}")
+    xp = xp + scores[1]
+    print(f"Experience is now {xp}")
+
+    return result
+
+def eat_bread(success):
+    if success:
+        return (1, 0)
+    else:
+        return (-1, 0)
+
+def fight_ice_weasel(success):
+    if success:
+        return (0, 10)
+    else:
+        return (-10, 10)
+
+attempt('Eating bread', 5, lambda success: (1,10) if success else (-1, 0) )
+attempt('Fighting ice weasel', 15, lambda success: (0, 10) if success else (-10, 10))
+```
+
+以上每个函数调用的第三个参数都是一个 lambda 表达式，它接收一个名为 success 的参
+数，并根据 success 的值返回另一个值。
+
+通过使用 lambda 表达式，便可以用一行代码创建出许多不同的可能结果。
+
+请记住，lambda 表达式只能有一个 return 表达式！这使得 lambda 表达式非常适用于短
+小、清晰的逻辑片段，尤其是当通过将逻辑保持在另一个函数调用中的用例附近来使代码更
+具可读性时。
+
+### 6.10.2 将 lambda 作为排序的键
+
+lambda 表达式最常见的一个用途是作为排序键使用，排序键是一个可调用的函数，它返回
+应该用于排序的集合或对象的一部分。排序键通常被传递给另一个函数，该函数负责以某种
+方式对数据进行排序。
+
+```python
+
+```
