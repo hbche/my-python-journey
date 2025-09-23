@@ -81,8 +81,8 @@ def __new__(cls, *args, **kw_args):
 接收类实例作为参数 self）​。由于初始化器接收参数，因此还需要让构造函数准备好接收
 这些参数，同时使用可变参数捕获这些参数并将它们传递给初始化器。
 
-构造器必须返回创建的类实例。从技术上讲，我们可以在这里返回你想要的任何东西，但预
-期的行为通常是返回 SecretAgent 类的实例。要做到这一点，就需要调用父类
+构造器必须返回创建的类实例。从技术上讲，我们可以在这里返回我们想要的任何东西，但
+预期的行为通常是返回 SecretAgent 类的实例。要做到这一点，就需要调用父类
 的`__new__()`函数，我们可能还记得 SecretAgent 类的父类是 object。
 
 在实践中，如果这是构造函数需要做的所有事情，那就省略它！如果没有为其编写任何代码
@@ -231,8 +231,9 @@ msg = Message()
 print(msg.__format)     # AttributeError: 'Message' object has no attribute '__format'. Did you mean: '__format__'?
 ```
 
-这将引发 AttributeError，因为 msg 实例没有名为\_\_format 的属性，那个属性的名称
-被修饰了。请注意，名称修饰不是真正的数据隐藏！你仍然可以访问经过名被修饰的属性，
+这将引发 AttributeError，因为 msg 实例没有名为`__format` 的属性，那个属性的名称
+被修饰了。请注意，名称修饰不是真正的数据隐藏！我们仍然可以访问经过名被修饰的属性
+，
 
 ```python
 msg = Message()
@@ -444,8 +445,8 @@ print(decrypt_message)      # Have you learned Python?
 访问或修改属性。这取决于我们想要做什么。
 
 为 SecretAgent 类定义一个名为 secret 的特性，将其作为 `_secrets` 实例属性的
-getter、setter 和 deleter。这种方法将允许你添加逻辑，例如让 setter 在将数据存储
-到 `_secrets` 的属性之前对其进行加密。
+getter、setter 和 deleter。这种方法将允许我们添加逻辑，例如让 setter 在将数据存
+储到 `_secrets` 的属性之前对其进行加密。
 
 在定义特性之前，需要定义组成特性的 3 个实例方法。从技术上讲，可以随意命名它们，
 但惯例是将它们命名为 getx、setx 和 delx，其中 x 是特性的名称。这里将它们定义为非
@@ -714,68 +715,217 @@ GlobalCoordinates 类将纬度和经度转换并存储为由度、分、秒，�
 
 1. 规范字符串表示： `__repr__()`
 
-在编写一个类时，最好定义 `__repr__()` 实例方法，它返回对象的常规字符串表示。这个
-字符串表示应该包含创建具有相同内容的另一个类实例所需的所有数据。
+   在编写一个类时，最好定义 `__repr__()` 实例方法，它返回对象的常规字符串表示。
+   这个字符串表示应该包含创建具有相同内容的另一个类实例所需的所有数据。
 
-如果没有为 GlobalCoordinates 定义 `__repr__()` 实例方法，Python 将回退到其默认的
-表示，这几乎没有任何实际用途。创建一个 GlobalCoordinates 实例，并通过 repr() 输
-出这个默认的表示，如下所示：
+   如果没有为 GlobalCoordinates 定义 `__repr__()` 实例方法，Python 将回退到其默
+   认的表示，这几乎没有任何实际用途。创建一个 GlobalCoordinates 实例，并通过
+   repr() 输出这个默认的表示，如下所示：
+
+   ```python
+   from global_coordinates import GlobalCoordinates
+
+   nsp = GlobalCoordinates(latitude=(37, 46, 32.6, 'N'), longitude=(122, 24, 39.4, 'W'))
+
+   print(repr(nsp))    # <global_coordinates.GlobalCoordinates object at 0x0000021A54DF6900>
+   ```
+
+   下面我们来自定义 `__repr__()` 实例方法，如下所示：
+
+   ```python
+       def __repr__(self):
+           return (
+               f"<GlobalCoordinates lat={self._lat_deg}° {self._lat_min}′ {self._lat_sec}″ \\ {self._lat_dir} lon={self._lon_deg}° {self._lon_min}′ {self._lon_sec}″ \\ {self._lon_dir}"
+           )
+   ```
+
+   运行以上代码将返回一个字符串，其中包含创建实例所需的所有信息，如下所示：
+
+   ```bash
+   <GlobalCoordinates lat=37° 46′ 32.6″ \ N lon=122° 24′ 39.4″ \ W>
+   ```
+
+2. 易读字符串表示：`__str__()`
+
+   `__str__()`与`__repr__()`具有类似的作用，但前者用于生成更可读的文本，而不是更
+   专业的规范表示；后者对于调试更有用。
+
+   如果没有定义`__str__()`，那么`__repr__()`将被调用，但在这个例子中这是不可取的
+   。用户只应该看到美观的坐标！
+
+   如下所示：
+
+   ```python
+       def __str__(self):
+           return (
+               f"lat={self._lat_deg}° {self._lat_min}′ {self._lat_sec}″ \\ {self._lat_dir} lon={self._lon_deg}° {self._lon_min}′ {self._lon_sec}″ \\ {self._lon_dir}"
+           )
+   ```
+
+   不同于 `__repr__()`，这里省略了所有无聊的技术信息，并专注于组合和返回用户可能
+   想要看到的字符串表示。
+
+   `__str__()` 在将类的实例传递给 str() 时会被调用，尽管将实例直接传递给 print()
+   或作为格式化字符串中的表达式也会调用 `__str__()`，如下所示：
+
+   ```python
+   print(f"No Starch Press's offices are at {nsp}")
+   ```
+
+   输出结果如下所示：
+
+   ```bash
+   lat=37° 46′ 32.6″ \ N lon=122° 24′ 39.4″ \ W
+   ```
+
+3. 唯一标识符（哈希）：`__hash__()`
+
+   `__hash__()`方法通常返回一个哈希值，这是一个整数，它对类实例中的数据而言是唯
+   一的。这允许我们在某些集合中使用类的实例，例如字典中的键或集合中的值。通常，
+   编写此方法会很有帮助，因为默认行为会导致每个类实例都具有唯一的哈希值，即使两
+   个实例包含完全相同的数据。
+
+   `__hash__()`方法应该只依赖于实例生命周期内不会改变的值！一些集合依赖于这些哈
+   希值永远不会改变，但可变对象的值可能会改变。
+
+   GlobalCOordinates 类的 `__hash__()` 方法：
+
+   ```python
+       def __hash__(self):
+           return hash((self._lat_deg, self._lat_min, self._lat_sec, self._lat_dir, self._lon_deg, self._lon_min, self._lon_sec, self._lon_dir))
+   ```
+
+   以上代码创建了一个包含所有重要实例属性的元组，接着对元组调用 hash()，返回传递
+   给它的任何内容的哈希值，最后返回该哈希值。
+
+   > 陷阱警告：根据 Python 官方文档，如果定义了**hash**()，那么也应该定
+   > 义**eq**()
+
+4. 其余的特殊转换方法
+
+   Python 有将实例中的数据转换为其他形式的特殊方法。我们可以自行决定要在类中定义
+   哪些方法。
+
+   - `__bool__()`应该返回 True 或 False。如果没有定义，那么当自动转换为布尔值时
+     将检查`__len__()`是否返回非零值 ​，否则将始终使用 True。
+   - `__bytes__()`应该返回一个 bytes 对象
+   - `__ceil__()`应该返回一个整数，通常是将一个浮点数向上舍入到最接近的整数
+   - `__round__()`应该返回一个整数，通常是将一个浮点数四舍五入到最接近的整数。
+   - `__floor__()`应该返回一个整数，通常是将一个浮点数向下舍入到最接近的整数。
+   - `__trunc__()`应该返回一个整数，通常是从一个浮点数中删除非整数（小数）部分。
+   - `__complex__()`应该返回一个复数。
+   - `__float__()`应该返回一个浮点数。
+   - `__int__()`应该返回一个整数。可以简单地让这个方法调
+     用`__ceil__()`、`__floor__()`、`__round__()`或`__trunc__()`。
+   - `__index__()`应该返回与 int()相同的值，如果编写此方法，则还必须定义 int()。
+     这个方法的存在表明该类应该被视为整数类型。我们不必丢弃任何数据以获得整数值
+     （无损转换）​。
+   - `__format__()`应该接收一个表示格式规范（的字符串，并返回另一个应用了格式规
+     范的字符串。如何应用格式规范完全取决于我们。
+
+### 7.6.3 比较方法
+
+Python 有 6 个比较方法，分别对应 Python 中的 6 种比较运算符：==、!=、>、<、>=和
+<=。每个比较方法都返回一个布尔值。
+
+如果调用其中一个方法，但该方法未定义，则类实例将返回特殊值 NotImplemented，以通
+知 Python 比较没有发生。这使得 Python 能够决定最佳响应。在与内置类型进行比较的情
+况下，NotImplemented 将被 Python 隐式转换为布尔值 False，以避免破坏依赖这些方法
+的算法。在大多数其他情况下，这将引发 TypeError。
+
+1. 等于：`__eq__()`
+2. 不等于：`__ne__()`
+3. 小于和大于：`__lt__()`和`__gt__()`
+4. 小于等于和大于等于：`__le__()`和`__ge__()`
+
+### 7.6.4 二元运算符支持
+
+特殊方法还允许我们为类添加二元运算符（具有两个操作数的运算符）的支持。如果未定义
+任何方法，它们将默认返回 NotImplemented，这在表达式中通常会引发错误。
+
+### 7.6.5 一元运算符支持
+
+一元运算符（只有一个操作数）只接收一个参数 self。如前所述，如果未定义任何方法，
+则默认返回 NotImplemented。
+
+重写取反运算符(~)以返回一个 GlobalCoordinates 实例，这两个实例的经纬度相反。
+
+```python
+    def __invert__(self):
+        # 实现取反运算符
+        return GlobalCoordinates(latitude=self.degree_from_decimal(-self.latitude, lat=True), longitude=self.degree_from_decimal(-self.longitude, lat=False))
+```
+
+以下是取反运算符的结果：
 
 ```python
 from global_coordinates import GlobalCoordinates
 
 nsp = GlobalCoordinates(latitude=(37, 46, 32.6, 'N'), longitude=(122, 24, 39.4, 'W'))
+invert_nsp = ~nsp
 
-print(repr(nsp))    # <global_coordinates.GlobalCoordinates object at 0x0000021A54DF6900>
+print(f"Source: {nsp}")
+print(f"Invert: {invert_nsp}")
 ```
 
-下面我们来自定义 `__repr__()` 实例方法，如下所示：
-
-```python
-    def __repr__(self):
-        return (
-            f"<GlobalCoordinates lat={self._lat_deg}° {self._lat_min}′ {self._lat_sec}″ \\ {self._lat_dir} lon={self._lon_deg}° {self._lon_min}′ {self._lon_sec}″ \\ {self._lon_dir}"
-        )
-```
-
-运行以上代码将返回一个字符串，其中包含创建实例所需的所有信息，如下所示：
+输出结果：
 
 ```bash
-<GlobalCoordinates lat=37° 46′ 32.6″ \ N lon=122° 24′ 39.4″ \ W>
+Source: lat=37° 46′ 32.6″ \ N lon=122° 24′ 39.4″ \ W
+Invert: lat=37° 46′ 32.6″ \ S lon=122° 24′ 39.4″ \ E
 ```
 
-2. 易读字符串表示：`__str__()`
+一级运算符的其他特殊方法如下：
 
-`__str__()`与`__repr__()`具有类似的作用，但前者用于生成更可读的文本，而不是更专
-业的规范表示；后者对于调试更有用。
+- `__abs__()`是取反/二元翻转运算符（~）的操作方法。
+- `__invert__()`是取反/二元翻转运算符（~）的操作方法。
+- `__neg__()`是负号运算符（−）的操作方法。
+- `__pos__()`是正号运算符（+）的操作方法。
 
-如果没有定义`__str__()`，那么`__repr__()`将被调用，但在这个例子中这是不可取的。
-用户只应该看到美观的坐标！
+### 7.6.6 让类可调用
 
-如下所示：
+让类可调用等同于让类的实例可调用，这意味着实例可以像函数一样使用。为了实现这一点
+，可以使用特殊方法是`__call__()`，它可以接收任意数量的参数并返回任何内容。
+
+以下为 GlobalCoordinates 类实现 `__call__()`方法，接收一个 GlobalCoordinates 实
+例，计算两个坐标之间的距离：
 
 ```python
-    def __str__(self):
-        return (
-            f"lat={self._lat_deg}° {self._lat_min}′ {self._lat_sec}″ \\ {self._lat_dir} lon={self._lon_deg}° {self._lon_min}′ {self._lon_sec}″ \\ {self._lon_dir}"
+    def __cal__(self, other):
+        EARTH_RADIUS_KM = 6371
+        distance_lat = math.radians(other.latitude - self.latitude)
+        distance_lon = math.radians(other.longitude - self.longitude)
+        lat = math.radians(self.latitude)
+        lon = math.radians(self.longitude)
+        a = (
+            math.sin(distance_lat / 2) *
+            math.sin(distance_lat / 2) +
+            math.sin(distance_lon) *
+            math.sin(distance_lon / 2) *
+            math.cos(lat) *
+            math.cos(lon)
         )
+        c = 2 *  math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+        return c * EARTH_RADIUS_KM
 ```
 
-不同于 `__repr__()`，这里省略了所有无聊的技术信息，并专注于组合和返回用户可能想
-要看到的字符串表示。
-
-`__str__()` 在将类的实例传递给 str() 时会被调用，尽管将实例直接传递给 print() 或
-作为格式化字符串中的表达式也会调用 `__str__()`，如下所示：
+现在，我们可以像使用函数一样使用 GlobalCoordinate 类的任何实例：
 
 ```python
-print(f"No Starch Press's offices are at {nsp}")
+from global_coordinates import GlobalCoordinates
+
+nostarch = GlobalCoordinates(latitude=(37, 46, 32.6, "N"), longitude=(122, 24, 39.4, "W"))
+
+psf = GlobalCoordinates(latitude=(45, 27, 7.7, "N"), longitude=(122, 47, 30.2, "W"))
+
+distance = nostarch(psf)
+print(distance)     # 852.6857266443297
 ```
 
-输出结果如下所示：
+以上代码定义了两个 GlobalCoordinate 实例，然后通过将其中一个实例传递给另一个实例
+并存储结果来计算两点之间的距离。
 
-```bash
-lat=37° 46′ 32.6″ \ N lon=122° 24′ 39.4″ \ W
-```
+### 7.6.7 更多特殊方法
 
-3. 唯一标识符（哈希）：`__hash__()`
-
+## 7.7 类装饰器

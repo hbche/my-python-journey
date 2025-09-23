@@ -1,6 +1,6 @@
 # Python 编程从新手到高手
 
-![](https://img3.doubanio.com/view/subject/l/public/s35212767.jpg)
+<img src="https://img3.doubanio.com/view/subject/l/public/s35212767.jpg" width="340" />
 
 | 作者                                      | 译者                                     | 出版日期   | 出版社         | 豆瓣评分 |
 | ----------------------------------------- | ---------------------------------------- | ---------- | -------------- | -------- |
@@ -24,9 +24,9 @@
 
 讲解 Python 哲学、开发环境、基本语法、项目结构和代码导入等内容
 
-#### [第 1 章 Python的哲学](./chapter-01/index.md)
+#### [第 1 章 Python 的哲学](./chapter-01/index.md)
 
-#### [第 2 章 Python开发环境](./chapter-02/index.md)
+#### [第 2 章 Python 开发环境](./chapter-02/index.md)
 
 #### [第 4 章 项目结构和代码导入](./chapter-04/index.md)
 
@@ -37,6 +37,8 @@
 #### [第 5 章 变量和数据类型](./chapter-05/index.md)
 
 #### [第 6 章 函数和匿名函数](./chapter-06/index.md)
+
+#### [第 7 章 类和对象](./chapter-07/index.md)
 
 ### 第三部分 数据和流程
 

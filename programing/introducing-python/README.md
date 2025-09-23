@@ -1,6 +1,6 @@
 # Python 语言及其应用 (第 2 版)
 
-![](https://img1.doubanio.com/view/subject/l/public/s34148068.jpg)
+<img src="https://img1.doubanio.com/view/subject/l/public/s34148068.jpg" width="450">
 
 | 作者                 | 译者 | 出版日期   | 出版社         | 豆瓣评分 |
 | -------------------- | ---- | ---------- | -------------- | -------- |
