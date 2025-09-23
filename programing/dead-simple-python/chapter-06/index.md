@@ -718,5 +718,263 @@ lambda 表达式最常见的一个用途是作为排序键使用，排序键是�
 方式对数据进行排序。
 
 ```python
+people = [
+    ("Jason", "McDonald"),
+    ("Denis", "Pobedrya"),
+    ("Daniel", "Foerster"),
+    ("Jaime", "Lopez"),
+    ("James", "Beecham")
+]
 
+# 使用lambda表达式指定排序的键，通过姓来排序
+sorted_by_last_name = sorted(people, key=lambda name: name[1])
+print(sorted_by_last_name)
 ```
+
+这里的 sorted()函数使用 key 参数，该参数总是一个函数或其他可调用对象，可通过将每
+一项传递给它，然后使用该可调用对象返回的值来确定排列顺序。由于想按姓氏对元组进行
+排序，而姓氏是每个元组的第二项，因此使用 lambda 表达式返回这一项，即 x[1]​。
+
+## 6.11 装饰器
+
+装饰器允许将函数封装在额外的逻辑层中来修改函数，而无须重写函数本身。
+
+下面以文字游戏案例说明装饰器：
+
+```python
+import random
+
+character = "Sir Bob"
+xp = 0
+health = 15
+
+def eat_food(food):
+    global health
+    if health <= 0:
+        print(f"{character} is too weak.")
+        return
+    print(f"{character} ate {food}")
+    health += 1
+    print(f"Health: {health} | XP: {xp}")
+
+def fight_monster(monster, strength):
+    global xp, health
+    if health <= 0:
+        print(f"{character} is too weak.")
+        return
+    if random.randint(1, 20) >= strength:
+        xp += 10
+        print(f"{character} defeated {monster}.")
+    else:
+        health -= 10
+        xp += 5
+        print(f"{character} flees from {monster}")
+
+    print(f"    Health: {health} | XP: {xp}")
+
+# 模拟吃面包
+eat_food('bread')
+# 魔精 一种小型恶魔或精怪
+fight_monster('Imp', 15)
+# 恐狼 史塔克家族的冰原狼就是典型的Direwolf
+fight_monster('Direwolf', 15)
+# 米诺陶洛斯 源自​​希腊神话​​的著名怪物
+fight_monster('Minotaur', 19)
+```
+
+一种可能的输出：
+
+```bash
+Sir Bob ate bread
+Health: 16 | XP: 0
+Sir Bob defeated Imp.
+    Health: 16 | XP: 10
+Sir Bob flees from Direwolf
+    Health: 6 | XP: 15
+Sir Bob flees from Minotaur
+    Health: -4 | XP: 20
+```
+
+接下来我们使用装饰器改写上面的示例：
+
+```python
+import random
+import functools
+
+character = "Sir Bob"
+xp = 0
+health = 15
+
+def character_action(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kw_args):
+        if health <= 0:
+            print(f"{character} is too weak.")
+            return
+
+        result = func(*args, **kw_args)
+        print(f"Health: {health} | XP: {xp}")
+        return result
+
+    return wrapper
+```
+
+装饰器最常见的实现方式是作为闭包实现，闭包中包含对已修改函数（或任何其他可调用对
+象）的引用。装饰器 character_action()接收一个 func 参数，这是已修改的可调用对象
+。
+
+由于不知道应用装饰器的函数将接收多少个参数，因此将 wrapper 设置为接收可变参数。
+
+@functools.wraps(func) 这行代码可以防止被封装的可调用对象的身份被程序的其他部分
+隐藏。如果没有这一行，封装可调用对象就会破坏对`__doc__`（文档字符串）
+和`__name__`等重要函数属性的外部访问。这一行本身就是一个装饰器，它可以确保已封装
+的函数中保留了可调用对象的所有重要属性，从而使它们能够以所有常见的方式在函数外部
+访问。​
+
+在 wrapper 中放置想在每个函数前后运行的所有逻辑。在检查了角色健康状况之后，调用
+绑定到 func 的函数，并将所有可变参数解包到调用中。然后将返回值绑定到 result，从
+而确保在输出统计数据之后从装饰器返回。
+
+与任何闭包一样，重要的是外部函数返回内部函数。
+
+现在就可以使用装饰器并重构其他函数了：
+
+```python
+@character_action
+def eat_food(food):
+    global health
+    print(f"{character} ate {food}")
+    health += 1
+
+@character_action
+def fight_monster(monster, strength):
+    global xp, health
+    if random.randint(1, 20) >= strength:
+        xp += 10
+        print(f"{character} defeated {monster}.")
+    else:
+        health -= 10
+        xp += 5
+        print(f"{character} flees from {monster}")
+
+# 模拟吃面包
+eat_food('bread')
+# 魔精 一种小型恶魔或精怪
+fight_monster('Imp', 15)
+# 恐狼 史塔克家族的冰原狼就是典型的Direwolf
+fight_monster('Direwolf', 15)
+# 米诺陶洛斯 源自​​希腊神话​​的著名怪物
+fight_monster('Minotaur', 19)
+```
+
+为了将装饰器应用于函数，在函数定义中列出想要应用的每个装饰器，每行一个装饰器，每
+个装饰器的名称前有一个@符号。这里只为每个函数应用了一个装饰器，但也可以使用任意
+多的装饰器。它们将按顺序应用，每个装饰器都将封装其下方紧邻的内容。
+
+自从把用于检查健康和显示统计信息的重复逻辑从各个函数中移动到装饰器中，代码变得更
+清晰、更易于维护了。运行新的代码，它的效果和以前一样。
+
+## 6.12 类型提示及函数注解
+
+Python 3.5 及更高版本允许指定类型提示，这些提示确切地说是关于应该传入或返回什么
+数据类型的提示。鉴于 Python 强大的动态类型系统，这些不是必需的，但它们可能有一些
+好处。
+
+首先，类型提示有助于文档编写。
+
+其次，类型提示可以帮助我们更早地发现潜在的错误。
+
+使用类型提示并不会将 Python 的动态类型转换为静态类型！
+
+Python 不会在你传递错误类型的数据时抛出错误。
+
+Python 也不会尝试将数据转换为指定的类型。
+
+Python 将完全忽略这些提示！
+
+> 陷阱警告：lambda 表达式暂不支持类型提示。
+
+_类型提示通过注解指定_，注解是 Python 允许添加的额外信息，但实际上解释器并不处理
+注解。有两种类型的注解：变量注解和函数注解。
+
+变量注解指定名称期望的类型，如下所示：
+
+```python
+answer: int = 42
+```
+
+函数注解指定参数和函数返回值的类型提示。将函数注解应用于前面的 roll_dice() 函数
+：
+
+```python
+import typing
+import random
+
+# 给 roll_dice 增加类型
+def roll_dice(sides: int = 6, dice: int = 1) -> typing.Tuple[int, ...]:
+    return tuple(random.randint(1, sides) for _ in range(dice))
+
+roll_cup = roll_dice(dice=3)
+print(roll_cup)
+```
+
+这种符号允许你指定期望的参数和返回值的类型。在这种情况下，两个参数都应该接收一个
+整数，所以在每个名称的后面加上一个冒号，然后是期望的数据类型 int。如果有默认值，
+默认值将包含在类型提示之后。
+
+> 这种符号允许你指定期望的参数和返回值的类型。在这种情况下，两个参数都应该接收一
+> 个整数，所以在每个名称的后面加上一个冒号，然后是期望的数据类型 int。如果有默认
+> 值，默认值将包含在类型提示之后。
+
+可以使用箭头（->）和期望的类型来表示返回类型。用类型提示来指定像元组和列表这样的
+集合有点棘手。还可以使用 typing 模块中的元组的符号（​[ ]​）​，这是一个通用类型。
+这个特定元组中的每个值都应该是一个整数，但是由于不知道会返回多少个值，因此使用
+“…”来表示“可能会有更多”​。现在，我们期望函数返回一个或多个整数，但没有其他类型。
+
+如果不知道元组会返回什么类型或多少个类型，可以使用注解 typing.Tuple [typing.Any,
+…]​。
+
+在前面的示例中，返回类型提示很长，我可以通过定义类型别名来缩短它：
+
+```python
+import typing
+import random
+
+# 定义类型别名
+TupleInts = typing.Tuple[int, ...]
+
+# 给 roll_dice 增加类型
+def roll_dice(sides: int = 6, dice: int = 1) -> TupleInts:
+    return tuple(random.randint(1, sides) for _ in range(dice))
+
+roll_cup = roll_dice(dice=3)
+print(roll_cup)
+```
+
+Python 本身不会对这些类型提示采取任何行动，而只会将这种符号系统识别为有效，并存
+储在函数的`__annotations__`属性中，仅此而已。
+
+### 6.12.1 鸭子类型和类型提示
+
+我们可能认为类型提示与鸭子类型不兼容，但由于 typing 模块，这两者通常可以很好地配
+合使用。
+
+### 6.12.2 应该使用类型提示吗？
+
+类型提示完全是可选的，有些情况适用，有些情况不适用。
+
+在实践中，不需要做出“使用或不使用”的全面决定。由于类型提示是可选的，因此可以在它
+能够提高代码的可读性和稳定性的情况下使用它，而在它不起作用的情况下跳过它。甚至在
+一个函数中，可以为一个参数定义类型提示，而对下一个参数省略类型提示。
+
+使用类型提示的最终决定权在我们自己手中。
+
+## 小结
+
+1. Python 函数式编程
+2. 函数嵌套
+3. 递归
+4. 参数作用域
+5. 闭包
+6. 装饰器
+7. 类型提示、参数注解和函数注解
