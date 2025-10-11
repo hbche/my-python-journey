@@ -273,7 +273,7 @@ print(customers)    # eque(['James', 'Denis'])
 
 可变集合是一种内置的、可变的、无序的集合，其中所有元素都必须是唯一的。如果尝试添
 加可变集合中已存在的元素，添加操作会被忽略。我们将主要使用可变集合进行快速检查以
-及与集合论相关的各种操作，尤其实在大型数据集中。
+及与集合论相关的各种操作，尤其是在大型数据集中。
 
 存储在可变集合中的每个值都必须是可哈希的，Python 文档将可变集合定义为具有“在其生
 命周期内永不改变的哈希值”。可哈希对象实现了特殊方法 `__hash__()`。所有内置的不可
@@ -310,3 +310,476 @@ print 语句输出可变集合中当前所有元素。可变集合是无序的�
 raffle.discard('Simon')
 print(raffle)   # {'Daniel', 'Denis', 'James'}
 ```
+
+也可以使用 remove() 来删除一个值，但是若果指定的值不在可变集合中，则会引发
+KeyError。discord() 永远不会引发错误。
+
+最后，使用 pop() 从可变集合中返回并删除任意项：
+
+```python
+winner = raflle.pop()
+print(winner)
+```
+
+> 请注意，任意并不意味着随意！pop()方法总是返回和删除恰好位于可变集合第一个位置
+> 的元素。因为可变集合是无序的，并且 Python 并不保证元素的内部顺序，所以不要依赖
+> 可变集合来提供可靠的随机性。
+
+> 要指定一个空的可变集合，可以使用 set()，因为一对空的花括号实际指的是一个空白字
+> 典。
+
+### 9.2.6 不可变集合
+
+可变集合的不可变孪生对象是不可变集合，它们的工作方式大致相同。不可变集合和可变集
+合的区别就像列表和元组的区别：一旦创建，不可变集合就不能再追加或删除元素。
+
+为了证明这一点，创建一个不可变集合来存储过往所有获奖的客户，以免他们再次参与抽奖
+：
+
+```python
+raffle = {'Kyle', 'Denis', 'Jason'}
+# 创建不可变集合，记录过往获奖名单
+pre_winners = frozenset({'Denis', 'Simon'})
+```
+
+可以将一组字符串、现有的可变集合或另一个线性集合传递给 frozenset()进行初始化
+。pre_winners 被定义之后，其内容就不能修改 —— 记住，这是不可变的。常规的可变集合
+仍然可以修改。
+
+可变集合和不可变集合一个令人兴奋的功能是它们都支持集合数学运算。可以使用数学运算
+符和逻辑运算符来计算并集(|)、交集(&)、差集(-)以及对称差集(^)。它们还可以用于测试
+一个集合是另一个集合的子集(<或<=)还是超集(>或>=)。Python 官方文档介绍了其他几个
+用于组合和比较任意类型集合的函数。
+
+使用 -= 运算符从抽奖集删除所有以往的获奖者：
+
+```python
+# 使用 -= 运算符删除过往获奖者
+raffle -= pre_winners
+print(raffle)   # 打印删除后的抽奖名单  {'Kyle', 'Jason'}
+```
+
+然后就可以使用 pop() 从 raffle 中取出任意一个元素来找到下一位获奖者：
+
+```python
+winner = raffle.pop()
+print(winner)
+```
+
+### 9.2.7 字段
+
+字典是一种可变集合，它以键值对的形式存储数据，而不是以线性方式存储数据。这种关联
+的存储方式称为映射。键实际上可以是任意类型，只要该类型是可哈希的即可。最容易记住
+的是，可哈希类型实际总是不可变的。
+
+键值对中的值可以是任何值。无论字典中的数据量大小如何，通过键进行查找总是特别快。
+（在其他语言中，这种数据类型成为哈希表。）
+
+使用字段存储 Uncomment Cage 的咖啡味：
+
+```python
+menu = {"drip": 1.95, "cappuccino": 2.95}
+```
+
+以上代码将字典创建为一系列以逗号分隔的键值对，用花括号括起来，并用冒号分隔每个键
+值对中的键和值。在本例中，键是表示咖啡味的字符串，值是表示加个的浮点数。
+
+可通过在方括号中指定键来访问各个元素：
+
+```python
+print(menu["drip"])     # 1.95
+```
+
+如果正在访问的键不在字典中， 则引发 KeyError。可以通过为方括号中指定的键赋值来添
+加或修改元素。在这里，向字典中追加 "americano" 键，并指定价格为 2.49：
+
+```python
+# 添加元素
+menu['americano'] = 2.49
+print(menu)     # {'drip': 1.95, 'cappuccino': 2.95, 'americano': 2.49}
+```
+
+出于某些原因，美式咖啡在咖啡馆里并不是很受欢迎，所以我们决定使用 del 关键字将其
+从字典中删除：
+
+```python
+# 删除指定元素
+del menu['americano']
+print(menu)     # {'drip': 1.95, 'cappuccino': 2.95}
+```
+
+再次提醒，如果方括号中的键不在字典中，将引发 KeyError。
+
+### 9.2.8 检查还是例外？
+
+关于应该直接使用 in 运算符，还是使用带有 KeyError 的 try 语句来检查字典中的键，
+仍存在一些争议。
+
+若使用 EAFP 策略，则代码如下：
+
+```python
+menu = {'drip': 1.95, 'cappuccino': 2.95, 'americano': 2.49}
+
+def check(order):
+    try:
+        print(f"Your total is {menu[order]}")
+    except KeyError:
+        print("That item is not on the menu.")
+
+check('drip')       # Your total is 1.95
+check('tea')        # That item is not on the menu.
+```
+
+以上代码在 try 语句中尝试访问和键 order 关联的字段 menu 中的值。如果键无效，将引
+发 KeyError，在 except 子句中捕获这一异常，然后采取适当的行动来处理。
+
+这种方式更适用于无效键处于异常情况的场景。通常，使用 except 子句是一种在性能方面
+开销更加昂贵的操作，但是对处理错误和其他异常情况来说，这又是完全合理的开销。
+
+如果使用 LBYL 策略，则代码如下：
+
+```python
+menu = {"drip": 1.95, "cappuccino": 2.95, "americano": 2.49}
+
+def checkout(order):
+    if order in menu:
+        print(f"Your total is {menu[order]}")
+    else:
+        print("That item is not on the menu.")
+
+checkout("drip")        # Your total is 1.95
+checkout("tea")         # That item is not on the menu.
+```
+
+在这种策略中，在执行任何操作之前检查 oder 是否为 menu 字典中存在的键。如果是，就
+可以安全地访问和键关联的值。如果希望经常检查键是否有效，则这种方法更加可取，因为
+这两种情况都有可能发生。失败比例外更常见，因此，以上两种策略在理想情况下具有大致
+相同的性能。
+
+### 9.2.9 字典变体
+
+Python 有一个 collections 模块，其提供了内置字典的一些变体。以下是三种最常见的变
+体，以及它们各自对应的独特行为。
+
+- defaultdict: 允许指定生成默认值的可调用对象。如果尝试访问未定义键的值，Python
+  将使用此默认值自动定义一个新的键值对。
+- OrderedDict: 具有用以跟踪和管理键值对顺序的额外功能。从 Python 3.7 开始，内置
+  的 dict 也正式保留了插入顺序，但是 OrderedDict 专门针对重新排序进行了优化，并
+  具有额外的行为支持。
+- Counter: 是专为计算可哈希对象而设计的，对象是键，计数是整数值。在其他编程语言
+  中，这种类型的集合被称为多重集。
+
+## 9.3 集合的解包
+
+所有集合都可以解包到多个变量中，这意味着每个元素都有自己的名称。例如，可以将包含
+3 个客户的双端队列解包到 3 个单独的变量中。首先创建客户的双端队列：
+
+```python
+from collections import deque
+
+customers = deque(['Kyle', 'Simon', 'James'])
+```
+
+接下来解包这个双端队列。把以逗号分割的名称列表按顺序放在赋值运算符的左侧，即可完
+成解包：
+
+```python
+first, second, third = customers
+print(first)        # Kyle
+print(second)       # Simon
+print(third)        # James
+```
+
+有时，我们会看到赋值运算符的左侧部分用括号括了起来，不过，解包线性集合时不需要使
+用括号。被解包的集合则放在赋值运算符的右侧。
+
+解包有一个主要限制：我们必须知道要解包的值有多少个！为了演示这一点，用 append()
+方法向双端队列中追加一个客户：
+
+```python
+customers.append('Daniel')
+```
+
+如果在赋值运算符的左侧指定太多或太少的名称，将引发 ValueError。由于当前双端队列
+包含四个值，因此尝试将其解包为三个值会失败：
+
+```bash
+    first, second, third = customers
+    ^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 3)
+```
+
+要解决这个问题，可以在赋值运算符的左侧指定第 4 个名称。但是对于这个例子，我们想
+忽略第 4 个值，可通过将其解包为下划线(\_)来忽略任何元素：
+
+```python
+first, second, third, _ = customers
+print(first)        # Kyle
+print(second)       # Simon
+print(third)        # James
+```
+
+当下划线用作名称时，通常表示应该忽略响应值。可以根据需要多次使用下划线。如果想忽
+略集合中的最后两个值，如下所示：
+
+```python
+first, second, _, _ = customers
+print(first)        # Kyle
+print(second)       # Simon
+```
+
+只有 customers 中的前两个值被解包，最后两个值则被忽略。
+
+顺便说明一下，如果需要解包一个只包含一个值的集合，在要解包到的名称后保留一个逗号
+即可：
+
+```python
+# 注意：只有一个元素的元组，结尾需要保留一个逗号，区分()运算符
+baristas = ('Jason', )
+barista,  = baristas
+print(barista)
+```
+
+### 9.3.1 星号表达式
+
+如果不知道集合中有多少额外的值，则可以使用带星号的表达式(称为星号表达式)捕获多个
+还未解包的值：
+
+```python
+# 星号表达式
+customers = deque(['Kyle', 'Simon', 'James', 'Daniel'])
+first, second, *rest = customers
+print(first)        # Kyle
+print(second)       # Simon
+print(rest)         # ['James', 'Daniel']
+```
+
+前两个值被解包为 first 和 second，其余的值（如果有的话）则被打包到 rest 列表中。
+只要被解包的集合至少有两个值，能逐一对应赋值运算符左侧每个未加星号的名称，这行代
+码就能工作。如果集合中仅有两个值，则 rest 将是一个空列表。
+
+可以在解包列表中的任何位置（包括开头）使用星号表达式。如下所示：
+
+```python
+# 星号表达式
+customers = deque(['Kyle', 'Simon', 'James', 'Daniel'])
+first, *middle, last = customers
+print(first)        # Kyle
+print(middle)       # ['Simon', 'James']
+print(last)         # Daniel
+```
+
+甚至可以使用星号表达式来忽略多个值：
+
+```python
+# 星号表达式
+customers = deque(['Kyle', 'Simon', 'James', 'Daniel'])
+*_, second_to_last, last = customers
+print(second_to_last)   # James
+print(last)             # Daniel
+```
+
+通过在下划线前加上星号，以上代码捕获了多个值，但又忽略了他们，而不是将它们打包到
+一个列表中。在这种情况下，其实只解包了集合中的最后两个值。
+
+每个解包语句中只能有一个星号表达式，因为星号表达式是贪婪的 —— 其力图捕获尽可能多
+的值。在评估星号表达式前，Python 将值解包到所有其他名称中。在同一个语句中使用多
+个星号表达式是没有意义的，因为 Python 无法确定一个表达式在哪里停止，以及另一个表
+达式又在何处开始。
+
+### 9.3.2 字典的解包
+
+字典可以向任何其他内建类型的集合一样解包。默认情况下，只有键被解包，就像解包表示
+咖啡口味的字典那样：
+
+```python
+menu = {'drip': 1.95, 'cappuccion': 2.95, 'americano': 2.49}
+a, b, c = menu
+print(a)        # drip
+print(b)        # cappuccion
+print(c)        # americano
+```
+
+如果想要的是值，就必须使用字典视图进行解包，字典视图提供了对字典中键和值的访问。
+在这种情况下，使用 value() 字典视图：
+
+```python
+# 对字典的值进行解包
+a, b, c = menu.values()
+print(a)        # 1.95
+print(b)        # 2.95
+print(c)        # 2.49
+```
+
+还可以通过 item() 字典视图同时解包获得键和值，浙江返回元组形式的键值对：
+
+```python
+# 基于字典的 item 视图解包
+a, b, c = menu.items()
+print(a)        # ('drip', 1.95)
+print(b)        # ('cappuccion', 2.95)
+print(c)        # ('americano', 2.49)
+```
+
+还可以通过在元组将被解包到的一对名称周围使用圆括号，在同一语句中解包每个键值元组
+：
+
+```python
+(a_name, a_price), (b_name, b_price), *_ = menu.items()
+print(a_name)       # drip
+print(a_price)      # 1.95
+print(b_name)       # cappuccion
+print(b_price)      # 2.95
+```
+
+可以使用这种带括号的解包策略来解包二维集合，如元组列表或集合元组
+
+## 9.4 集合的结构模式匹配
+
+从 Python3.10 开始，可以对元组、里诶包和字典进行结构模式匹配。
+
+在模式中，元组和列表是可以互换的，因为它们都和序列模式匹配。序列模式使用和解包相
+同的语法，且具有使用星号表达式的能力。例如，可以匹配序列的第一个和最后一个元素，
+并忽略中间所有其他元素：
+
+```python
+order = ['venti', 'no whip', 'mocha latte', 'for here']
+
+match order:
+    case ('tall', *drink, 'for here'):
+        drink = ' '.join(drink)
+        print(f"Filling ceramic mug with {drink}.")
+    case ['grande', *drink, 'to go']:
+        drink = ' '.join(drink)
+        print(f"Filling large paper cup with {drink}.")
+    case ('venti', *drink, 'for here'):
+        drink = ' '.join(drink)
+        print(f"Filling extra large tumbler with {drink}.")
+
+# Filling extra large tumbler with no whip mocha latte.
+```
+
+序列模式是相同的，无论是括在圆括号中还是括在方括号中，按里诶包顺序和每个模式进行
+比较。对于每一个序列，检查第一个和最后一个元素，其余元素则通过通配符捕获到 drink
+中。在每种情况下，都将 drink 中的元素结合在一起，以确定用什么来填充所选的容器。
+
+还可以使用映射模式对字典中的特定值进行模式匹配，只是改为使用字典，代码如下所示：
+
+```python
+# 使用字典进行序列匹配
+order = {
+    'size': 'venti',
+    'notes': 'no whip',
+    'drink': 'mocha latte',
+    'serve': 'for here'
+}
+
+match order:
+    case {'size': 'tall', 'serve': 'for here', 'drink': drink}:
+        print(f"Filling ceramic mug with {drink}.")
+    case {'size': 'grande', 'serve': 'to go', 'drink': drink}:
+        print(f"Filling large paper cup with {drink}.")
+    case {'size': 'venti', 'serve': 'for here', 'drink': drink}:
+        print(f"Fulling extra large tumbler with {drink}.")
+
+# Fulling extra large tumbler with mocha latte.
+```
+
+映射模式包裹在花括号中。仅检查映射模式中指定的键，而忽略其他键。在这个版本中，检
+查'size'和'serve'键，以及和键'drink'关联的值，并将它们捕获到 drink 中。
+
+如果运行这个版本的代码，就会注意到 'notes' 被去掉了。为了解决这个问题，可以将代
+码改写为使用通配符捕获所有剩余的键，如下所示：
+
+```python
+# 使用字典进行序列匹配
+order = {
+    'size': 'venti',
+    'notes': 'no whip',
+    'drink': 'mocha latte',
+    'serve': 'for here'
+}
+
+match order:
+    case {'size': 'tall', 'serve': 'for here', **rest}:
+        drink = f"{rest['notes']} {rest['drink']}"
+        print(f"Filling ceramic mug with {drink}.")
+    case {'size': 'grande', 'serve': 'to go', **rest}:
+        drink = f"{rest['notes']} {rest['drink']}"
+        print(f"Filling large paper cup with {drink}.")
+    case {'size': 'venti', 'serve': 'for here', **rest}:
+        drink = f"{rest['notes']} {rest['drink']}"
+        print(f"Fulling extra large tumbler with {drink}.")
+
+# Fulling extra large tumbler with no whip mocha latte.
+```
+
+> 因为映射模式中未明确列出的任何键都会被忽略，所以忽略所有剩余键而不捕获它们的通
+> 配符（两个星号加一个下画线，即\*\*\_）在映射模式中是不合法的。
+
+值得注意的是，我们仍然可以直接访问 order。如下所示：
+
+```python
+# 使用字典进行序列匹配
+order = {
+    'size': 'venti',
+    'notes': 'no whip',
+    'drink': 'mocha latte',
+    'serve': 'for here'
+}
+
+match order:
+    case {'size': 'tall', 'serve': 'for here'}:
+        drink = f"{order['notes']} {order['drink']}"
+        print(f"Filling ceramic mug with {drink}.")
+    case {'size': 'grande', 'serve': 'to go'}:
+        drink = f"{order['notes']} {order['drink']}"
+        print(f"Filling large paper cup with {drink}.")
+    case {'size': 'venti', 'serve': 'for here'}:
+        drink = f"{order['notes']} {order['drink']}"
+        print(f"Fulling extra large tumbler with {drink}.")
+
+# Fulling extra large tumbler with no whip mocha latte.
+```
+
+和以前一样，出于模式匹配的目的，映射模式中省略的每个键都将被忽略。
+
+## 9.5 以索引或键访问元素
+
+很多集合是可订阅的，这意味着可以通过在方括号中指定索引来访问某个元素
+
+```python
+specials = ['pumpkin spice latte', 'caramel macchiato', 'macho cappuccino']
+print(specials[1])      # caramel macchiato
+specials[1] = 'drip'
+print(specials[1])      # drip
+```
+
+可订阅的集合类实现了特殊方法`__getitem__()`、`__setitem__()`和`__delitem__()`，
+其中每个方法都接收一个整型参数。可以通过直接使用特殊方法而非方括号来查看效果。
+
+```python
+specials = ['pumpkin spice latte', 'caramel macchiato', 'macho cappuccino']
+# 使用特殊方法来访问和修改元素
+print(specials.__getitem__(1))
+specials.__setitem__(1, 'drip')
+print(specials.__getitem__(1))
+```
+
+这些特殊方法由 dict 类实现，只不过他们都接受一个键作为唯一参数。字典因为没有正式
+的“索引”，所以不能视为可订阅的集合对象。
+
+## 9.6 切片符
+
+切片符允许我们访问列表或元祖中特定的元素或元素范围。在集合的 5 种基本类型中，只
+有元组和列表可以切片。可变集合和字典都不可订阅，所以切片符对它们不起作用。双端队
+列虽然是可订阅的，但是由于其实现方式，但也不能使用切片符进行切片。
+
+要获取列表或元组的切片，可以在切片符周围使用方括号，切片符通常由 3 部分组成，以
+冒号分隔：
+
+```python
+[start:stop:step]
+```
+
+要在切片中声明的第一个元素的包含索引是start。独占索引stops则要刚好超过切片停止的位置。索引step允许你跳过元素甚至颠倒顺序。

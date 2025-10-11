@@ -8,3 +8,7 @@ print(raffle)   # {'James', 'Denis', 'Simon', 'Daniel'}
 # 使用discard方法从可变集合中移除元素
 raffle.discard('Simon')
 print(raffle)   # {'Daniel', 'Denis', 'James'}
+
+# 使用 pop 随机删除一个元素并返回
+winner = raffle.pop()
+print(winner)
