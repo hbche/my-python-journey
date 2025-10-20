@@ -782,4 +782,242 @@ print(specials.__getitem__(1))
 [start:stop:step]
 ```
 
-要在切片中声明的第一个元素的包含索引是start。独占索引stops则要刚好超过切片停止的位置。索引step允许你跳过元素甚至颠倒顺序。
+要在切片中声明的第一个元素的包含索引是 start。独占索引 stops 则要刚好超过切片停
+止的位置。索引 step 允许你跳过元素甚至颠倒顺序。
+
+### 9.6.1 开始和停止
+
+通过指定切片的开始位置和结束位置，可以指定一个范围：
+
+```python
+orders = [
+    "caramel macchiato",
+    "drip",
+    "pumpkin spice latte",
+    "drip",
+    "cappuccino",
+    "americano",
+    "mocha latte",
+]
+three_four_five = orders[3:6]
+print(three_four_five)      # ['drip', 'cappuccino', 'americano']
+```
+
+该切片从索引 3 开始，在索引 6 之前结束，因此包含索引 3~5 处的元素。
+
+切片的一个重要规则：start 必须始终引用 stop 之前的元素。默认情况下，列表是从头到
+尾遍历的，所以 start 必须小于 stop。
+
+切片并不需要所有参数。如果省略 start，切片从第一个元素开始；如果省略 stop，切片
+将以最后一个元素结束。
+
+如果想要列表中除前 4 个元素之外的所有元素，可以使用如下写法：
+
+```python
+after_third = orders[4:]
+print(after_third)          # ['cappuccino', 'americano', 'mocha latte']
+```
+
+该切片从索引 4 开始，由于没有在冒号后指定 stop 参数，因此该切片包括直至列表末尾
+的其余所有元素。
+
+可以通过如下写法，访问列表中的前两项：
+
+```python
+next_two = orders[:2]
+print(next_two)             # ['caramel macchiato', 'drip']
+```
+
+由于没有在冒号前指定 start 参数，因此默认从列表开头开始切片。stop 为 2，所以该切
+片包含索引 2 之前的所有元素。
+
+### 9.6.2 负索引
+
+可以使用负数作为索引，这样就可以从列表或元组的末尾开始遍历。例如，索引-1 指的是
+列表中的最后一项：
+
+```python
+print(orders[-1])           # mocha latte
+```
+
+负索引也适用于切片。例如，如果想得到列表末尾的 3 个订单，可以使用如下写法：
+
+```python
+# 获取末尾的3个元素
+last_three = orders[-3:]
+print(last_three)           # ['cappuccino', 'americano', 'mocha latte']
+```
+
+请记住，start 索引必须始终在 stop 索引前，默认情况下，列表是从左到右遍历的。因此
+，起点必须是-3，即倒数第三个订单；终点必须是-1.
+
+### 9.6.3 步长
+
+默认情况下，列表从头到尾完成遍历，从最小索引到最大索引，一个接一个。切片符的
+step 参数允许我们更改此行为，以便更好地控制切片中包含哪些值以及值的顺序。
+
+例如，可以通过将 step 设置为 2，创建一个每隔一个元素去一次值的咖啡订单的切片，该
+切片从第二个订单开始：
+
+```python
+# 指定步长为2，实现每个一个元素取一项
+every_order = orders[1::2]
+print(every_order)          # ['drip', 'drip', 'americano']
+```
+
+以上代码从索引 1 开始切片。由于没有指定 stop 索引，切片会持续到列表的末尾。step
+为 2 表示切片每隔一个元素进行取值。对于订单列表，这意味着切片由索引 1、3、5 处的
+元素组成。
+
+负的步长会反转列表或元组的读取方向。例如，将 step 设为-1，不指定 start 隔 stop，
+将返回整个订单列表的反转版本。
+
+```python
+reverse = orders[::-1]
+print(reverse)              # ['mocha latte', 'americano', 'cappuccino', 'drip', 'pumpkin spice latte', 'drip', 'caramel macchiato']
+```
+
+我们能够注意到-1 的前面有两个冒号，这是为了声明没有为 start 或 stop 指定任何值。
+否则，Python 将无法知道-1 是针对 step 参数的。
+
+### 9.6.4 切片复制
+
+关于切片的另外一件事就是它们总是返回一个包含所选元素的新列表或元组，原始列表或元
+组仍然存在。如下所示代码将创建一个列表的完美浅副本。
+
+```python
+order_copy = orders[:]
+orders.append('the end item')
+print(order_copy)           # ['caramel macchiato', 'drip', 'pumpkin spice latte', 'drip', 'cappuccino', 'americano', 'mocha latte']
+print(orders)               # ['caramel macchiato', 'drip', 'pumpkin spice latte', 'drip', 'cappuccino', 'americano', 'mocha latte', 'the end item']
+```
+
+由于既没有指定 start 也没有指定 stop，因此这个切片包含所有元素。
+
+### 9.6.5 切片对象
+
+还可以使用初始化方法 slice() 直接创建切片对象，以便复用。
+
+```python
+my_slice = slice(3, 5, 2)       # 等价与 [3:5:2]
+print(my_slice)
+```
+
+对应的 start、stop 和 step 作为位置参数传递进来。实际上这种方法比常规切片符的使
+用限制更多，因为这种形式无法省略 stop 值。
+
+但无论如何，现在可以使用 my_slice 代替切片符，并直接用在 print() 语句中。
+
+### 9.6.6 对自定义对象切片
+
+如果想在自己的对象中实现切片，只需要将切片对象作为所需操作的特殊方法的参数即可，
+比如 `__getitem__(self, sliced)`、`__setitem(self, sliced)`和
+`__delitem(self, sliced)`。然后就可以通过 sliced.start、sliced.stop 和
+sliced.step 获得切片对象关键的 3 个部分。
+
+### 9.6.7 使用 islice()
+
+我们仍然可以使用 itertools.islice()对双端队列或任何不可订阅的集合进行切片，其行
+为和切片符相同，只是不支持任何负值参数。
+
+```python
+islice(collection, start, stop, step)
+```
+
+例如，islice()可以从字典中取出一个切片，但不能用普通的切片符来切片，因为没有索引
+可用。在此，从 menu 字典中每隔一个元素取出一个元素：
+
+```python
+from itertools import islice
+
+menu = {'drip': 1.95, 'cappuccino': 2.95, 'americano': 2.49}
+# 在字典的items视图中，从索引0开始到索引为3的范围内，每各一个元素取一个
+menu = dict(islice(menu.items(), 0, 3, 2))
+print(menu)     # {'drip': 1.95, 'americano': 2.49}
+```
+
+以上代码将 menu 字典作为元组列表传递给 islice()，然后传递 start、stop 和 step 参
+数值以每隔一个元素取出一个元素，最后通过 islice()创建一个新字典将其绑定到 menu。
+
+## 9.7 in 运算符
+
+可以使用 in 运算符快速检查特定值是否包含在指定的集合中。
+
+```python
+orders = [
+    "caramel macchiato",
+    "drip",
+    "pumpkin spice latte",
+    "drip",
+    "cappuccino",
+    "americano",
+    "mocha latte",
+]
+
+if "mocha cappuccino" in orders:
+    print("Open chocolate surup bottle.")
+```
+
+把要检查的值放在 in 运算符的左侧，要搜索的集合放在 in 运算符的右侧。如果在集合中
+找到该值的至少一个实例，则 in 运算符返回 True，否则返回 False。
+
+还可以检查列表是否遗漏特定元素。例如，入股了现在没有人和 drip 咖啡，则不妨关闭咖
+啡机。
+
+```python
+if 'drip' in orders:
+    print("Shut off percolator.")       # Shut off percolator.
+```
+
+追加 not 能反转 in 条件。因此，如果在集合中找不到该值，则表达式的计算结果为
+True。
+
+可以通过实现特殊方法 `__contains__()` 来为自定义类追加对 in 运算符的支持。
+
+## 9.8 检验集合的长度
+
+要想知道一个集合中包含多少个元素，可以使用 len() 函数。
+
+```python
+customers = ['Glen', 'Todd', 'Newman']
+print(len(customers))       # 3
+```
+
+len 函数以整数形式返回 customers 中的元素数量。由于 customers 中有 3 个元素，因
+此返回值为 3。对于字典，len()将返回键值对的数量。
+
+进行迭代时，使用 len() 的次数将比预期的少，这改变了集合的遍历方式，毕竟这样就很
+少需要知道集合的具体长度了。
+
+在测试集合是否为空时，甚至不需要使用 len()函数。集合如果包含内容，则是“真实的”，
+这意味着计算结果为 True。否则，集合如果为空，则是“虚假的”，这也就意味着计算结果
+为 False。
+
+```python
+customers = []
+
+if customers:
+    print("There are customers.")
+else:
+    print("Quiet day.")
+
+print(bool(customers))
+
+# Quiet day.
+# False
+```
+
+customers 是空的，在用作表达式时，计算结果为 False。如果直接将 customers 当成布
+尔值，就会输出 False。
+
+通常，只有当需要将集合的长度作为数据本身的一部分时，才使用 len()。
+
+```python
+orders_per_day = [56, 41, 49, 22, 71, 43, 18]
+average_orders = sum(orders_per_day) // len(orders_per_day)     # 向下取整
+print(average_orders)       # 42
+```
+
+## 9.9 迭代
+
+
