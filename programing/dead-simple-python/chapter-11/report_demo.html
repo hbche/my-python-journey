@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>攻击路径图 - 无相AI</title>
+
+    <!-- 内联样式：完全自包含，无外网依赖 -->
+    <style>
+        /* 深色主题 CSS 变量 - 用于攻击路径图 */
+        :root {
+            /* 背景色系 */
+            --color-bg-primary: #0d1117;
+            --color-bg-panel: #161b22;
+            --color-bg-card: #1c2027;
+            --color-bg-card-light: #252a33;
+            --color-bg-hover: #30363d;
+
+            /* 文本色系 */
+            --color-text-primary: rgba(255, 255, 255, 0.85);
+            --color-text-secondary: rgba(255, 255, 255, 0.55);
+            --color-text-disabled: #484f58;
+            --color-text-error: #ea4335;
+
+            /* 边框与分割线 */
+            --color-border: #515968;
+            --color-border-light: #484f58;
+            --color-border-dark: #3b434e;
+            --color-divider: #21262d;
+        }
+
+        /* 基础重置和字体 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            line-height: 1.5;
+        }
+
+        /* 时序图样式 - 深色主题 */
+        .timeline-container {
+            background: var(--color-bg-panel);
+            border: 1px solid var(--color-border);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            overflow: visible;
+        }
+
+        .sequence-diagram {
+            position: relative;
+            width: 100%;
+            min-height: 400px;
+            height: calc(100vh - 500px);
+            /* 基于视口高度，减去其他内容的高度 */
+            max-height: 90vh;
+            /* 最大高度限制 */
+            overflow: hidden;
+            /* 裁剪超出内容，支持拖拽查看 */
+            padding: 0;
+            background: var(--color-bg-primary);
+            border-radius: 0.5rem;
+            cursor: grab;
+            /* 鼠标样式：抓取 */
+            user-select: none;
+            /* 防止拖拽时选中文本 */
+            touch-action: none;
+            /* 禁用浏览器默认触摸行为，完全由JS控制 */
+        }
+
+        .sequence-diagram.dragging {
+            cursor: grabbing;
+            /* 拖拽中：抓取中 */
+        }
+
+        .sequence-diagram-inner {
+            position: relative;
+            width: 100%;
+            min-height: 100%;
+            /* 允许根据内容自动扩展 */
+            /* transform 由 JavaScript 动态设置 */
+            will-change: transform;
+            /* 性能优化提示 */
+        }
+
+        .sequence-diagram .participants {
+            display: flex;
+            justify-content: space-around;
+            padding: 0 2rem;
+            margin-bottom: 1rem;
+            min-width: fit-content;
+            position: relative;
+            z-index: 5;
+        }
+
+        .sequence-diagram .participants-bottom {
+            display: flex;
+            justify-content: space-around;
+            padding: 0 2rem;
+            margin-top: 1rem;
+            min-width: fit-content;
+            position: relative;
+            z-index: 5;
+        }
+
+        .sequence-diagram .participant {
+            flex: 1 1 0;
+            min-width: 0;
+            text-align: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0 0.5rem;
+            z-index: 5;
+        }
+
+        .sequence-diagram .participant-box {
+            background: var(--color-bg-card);
+            border: 2px solid #3b82f6;
+            border-radius: 0.375rem;
+            padding: 0.75rem 1rem;
+            margin: 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            /* max-width 和 min-width 由 JavaScript 动态设置 */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+
+        .sequence-diagram .participant-name {
+            font-weight: 600;
+            color: var(--color-text-primary);
+            font-size: 0.875rem;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+
+        .sequence-diagram .participant-alias {
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+            margin: 0.25rem 0 0 0;
+            padding: 0;
+            text-align: center;
+            width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+
+        .sequence-diagram .participant-line {
+            position: absolute;
+            left: 50%;
+            width: 0;
+            border-left: 2px dashed var(--color-border);
+            transform: translateX(-50%);
+            z-index: 1;
+            /* top 和 height 由JavaScript动态设置，确保精确连接上下节点边缘 */
+        }
+
+        .sequence-diagram .messages {
+            position: relative;
+            display: flex;
+            /* 使用 Flexbox 垂直排列 */
+            flex-direction: column;
+            /* 垂直排列 */
+            gap: 1.5rem;
+            /* 使用 gap 控制间距，替代固定 margin */
+            min-height: 200px;
+            margin: 1rem 0;
+            z-index: 6;
+            padding-bottom: 1rem;
+        }
+
+        .sequence-diagram .message {
+            position: relative;
+            /* 移除 margin，使用父容器的 gap 控制间距 */
+            min-height: 60px;
+            /* 确保有足够高度容纳标签和箭头 */
+            padding-top: 1rem;
+            /* 为向上偏移的标签留出空间 */
+            /* 移除 z-index，避免创建新的层叠上下文，让标签的 z-index 在 .messages 层级生效 */
+        }
+
+        .sequence-diagram .message-line {
+            position: absolute;
+            height: var(--message-line-width, 2px);
+            background: #3b82f6;
+            z-index: 2;
+        }
+
+        .sequence-diagram .message-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            z-index: 3;
+        }
+
+        .sequence-diagram .message-arrow.right {
+            border-width: 6px 0 6px 10px;
+            border-color: transparent transparent transparent #3b82f6;
+        }
+
+        .sequence-diagram .message-arrow.left {
+            border-width: 6px 10px 6px 0;
+            border-color: transparent #3b82f6 transparent transparent;
+        }
+
+        .sequence-diagram .message-label {
+            position: absolute;
+            top: -0.75rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: transparent;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0;
+            font-size: 0.75rem;
+            color: var(--color-text-primary);
+            box-shadow: none;
+            z-index: 100;
+            cursor: pointer;
+            pointer-events: auto;
+            /* 使用flexbox垂直布局，确保simple和details垂直排列 */
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        /* 默认显示的简化内容（time + title） */
+        .sequence-diagram .message-label-simple {
+            display: block;
+            white-space: nowrap;
+            /* max-width 由 JavaScript 动态设置 */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            /* 确保不被覆盖，不收缩 */
+            flex-shrink: 0;
+        }
+
+        /* 默认隐藏的详细信息 */
+        .sequence-diagram .message-label-details {
+            display: none;
+            white-space: normal;
+            /* max-width 由 JavaScript 动态设置 */
+            line-height: 1.5;
+            margin-top: 0.25rem;
+            padding-top: 0.25rem;
+            border-top: 1px solid var(--color-divider);
+            /* 确保在simple下方，不收缩 */
+            flex-shrink: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* hover 时显示详细信息在标题下方 */
+        .sequence-diagram .message-label:hover .message-label-details {
+            display: block;
+        }
+
+        /* hover 时调整标签样式，确保有足够空间显示详细信息 */
+        .sequence-diagram .message-label:hover {
+            z-index: 10000;
+            padding-top: 0.25rem;
+            padding-bottom: 0.75rem;
+            background: var(--color-bg-card);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            border-radius: 0.25rem;
+            /* 保持flex布局 */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 时间样式 */
+        .sequence-diagram .message-time {
+            color: var(--color-text-secondary);
+            font-size: 0.7rem;
+            margin-right: 0.5rem;
+        }
+
+        /* 标题样式 */
+        .sequence-diagram .message-title {
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="timeline-container">
+        <div id="timeline-diagram" class="sequence-diagram"></div>
+    </div>
+    <script type="application/json"
+        id="timeline-data">{"messages": [{"content": "\u901a\u8fc7\u9493\u9c7c\u90ae\u4ef6\u8bf1\u4f7f\u7528\u6237\u6267\u884c\u6076\u610f\u9644\u4ef6\u003cbr\u003e\u6210\u529f\u83b7\u53d6\u7ba1\u7406\u5458\u6743\u9650", "from": "attacker", "severity": "medium", "time": "2023-08-23 18:00:00", "title": "\u9493\u9c7c\u90ae\u4ef6\u5165\u4fb5", "to": "host_a", "type": "solid"}, {"content": "\u4f7f\u7528\u5f31\u5bc6\u7801\u0027admin/admin\u0027\u6210\u529fSSH\u767b\u5f55\u003cbr\u003e\u7528\u6237\uff1aroot\u003cbr\u003e\u8fdb\u7a0b\uff1asshd(2345)", "from": "host_a", "severity": "high", "time": "2023-08-23 18:15:00", "title": "SSH\u5f31\u5bc6\u7801\u767b\u5f55", "to": "host_b", "type": "solid"}, {"content": "\u5229\u7528\u672a\u4fee\u8865\u7684CVE-2023-XXXX\u6f0f\u6d1e\u8fdc\u7a0b\u6267\u884c\u4ee3\u7801\u003cbr\u003e\u8fdb\u7a0b\uff1aexploit(1234)", "from": "host_b", "severity": "high", "time": "2023-08-23 18:30:00", "title": "\u6f0f\u6d1e\u5229\u7528\u6a2a\u5411\u79fb\u52a8", "to": "host_c", "type": "solid"}, {"content": "\u66b4\u529b\u7834\u89e3\u6210\u529f\u767b\u5f55RDP\u003cbr\u003e\u7528\u6237\uff1aAdministrator\u003cbr\u003e\u8fdb\u7a0b\uff1awinlogon.exe(6789)", "from": "host_b", "severity": "high", "time": "2023-08-23 18:45:00", "title": "RDP\u66b4\u529b\u7834\u89e3", "to": "host_d", "type": "solid"}, {"content": "\u901a\u8fc7FTP\u4f20\u8f93\u654f\u611f\u6570\u636e\u81f3C2\u670d\u52a1\u5668\u003cbr\u003e\u6587\u4ef6\u8def\u5f84\uff1a/var/data/sensitive_info.zip", "from": "host_c", "severity": "high", "time": "2023-08-23 19:00:00", "title": "\u6570\u636e\u6e17\u51fa", "to": "c2", "type": "solid"}], "participants": [{"alias": null, "id": "attacker", "name": "\u653b\u51fb\u8005"}, {"alias": "Windows", "id": "host_a", "name": "10.108.108.23"}, {"alias": "Linux", "id": "host_b", "name": "172.16.21.70"}, {"alias": "Linux", "id": "host_c", "name": "172.16.21.71"}, {"alias": "Linux", "id": "host_d", "name": "10.106.108.110"}, {"alias": "C2", "id": "c2", "name": "118.195.160.47"}]}</script>
+
+    <script>
+        // 基准尺寸（设计稿尺寸）
+        const BASE_WIDTH = 1200;
+        const BASE_HEIGHT = 600;
+
+        // 缩放限制
+        const MIN_SCALE = 0.5;
+        const MAX_SCALE = 2.0;
+
+        // 基准尺寸常量（像素值）
+        const BASE_SIZES = {
+            participantMinWidth: 120,
+            participantMaxWidth: 200,
+            participantPadding: { x: 16, y: 12 }, // 0.75rem 1rem
+            participantBorder: 2,
+            participantFontSize: 14, // 0.875rem
+            participantAliasFontSize: 12, // 0.75rem
+            participantLineWidth: 2,
+            messageSpacing: 80,
+            messageLineHeight: 2,
+            messageArrowSize: { width: 10, height: 6 },
+            messageLabelFontSize: 12, // 0.75rem
+            messageLabelPadding: { x: 8, y: 4 }, // 0.25rem 0.5rem
+            messageLabelMaxWidth: 300,
+            messageLabelDetailsMaxWidth: 400,
+            messageTimeFontSize: 14, // 0.7rem
+            messageTitleFontSize: 14, // 0.7rem
+            messageMargin: 16, // 1rem
+            messagePaddingBottom: 16, // 1rem
+            containerPadding: 32, // 2rem
+            participantGap: 16, // 1rem
+            initialMessageY: 20 // 初始消息Y位置
+        };
+
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 计算内容所需空间（基于基准尺寸）
+        function calculateRequiredDimensions(data) {
+            // 顶部参与者区域高度（估算）
+            const topParticipantsHeight = 80; // 参与者框高度 + 间距
+            // 消息区域高度（使用估算值，Flexbox 会自动调整）
+            // 每条消息约 60px 高度 + 24px gap = 84px
+            const estimatedMessageHeight = 60; // 单条消息高度
+            const estimatedGap = 24; // 消息之间的间距
+            const messagesHeight = data.messages.length * (estimatedMessageHeight + estimatedGap);
+            // 底部参与者区域高度（估算）
+            const bottomParticipantsHeight = 80;
+            // 容器内边距
+            const containerPadding = BASE_SIZES.containerPadding * 2; // 上下各2rem
+
+            return {
+                width: BASE_WIDTH,
+                height: topParticipantsHeight + messagesHeight + bottomParticipantsHeight + containerPadding
+            };
+        }
+
+        // 计算缩放因子（基于实际内容尺寸和可用空间）
+        function calculateScale(containerWidth, containerHeight, requiredWidth, requiredHeight) {
+            // 计算基于宽度和高度的缩放因子
+            const scaleX = containerWidth / requiredWidth;
+            const scaleY = containerHeight / requiredHeight;
+            // 取较小值，确保内容完全适配
+            const scale = Math.min(scaleX, scaleY);
+            // 限制在最小和最大缩放范围内
+            return Math.max(MIN_SCALE, Math.min(scale, MAX_SCALE));
+        }
+
+        function renderSequenceDiagram(data) {
+            const container = document.getElementById('timeline-diagram');
+            if (!container || !data || !data.participants || !data.messages) {
+                return;
+            }
+
+            // 清除之前固定的高度，让容器使用 CSS 的 calc(100vh - 500px) 重新计算
+            // 这样当窗口大小变化时，容器高度能够自动适应新的窗口大小
+            container.style.height = '';
+
+            // 使用 requestAnimationFrame 等待浏览器重新计算容器高度
+            // 这样 getBoundingClientRect() 会返回基于新窗口大小的值
+            requestAnimationFrame(function () {
+                // 清空容器
+                container.innerHTML = '';
+
+                // 创建内层容器（用于拖拽平移）
+                const innerContainer = document.createElement('div');
+                innerContainer.className = 'sequence-diagram-inner';
+                container.appendChild(innerContainer);
+
+                // 创建参与者映射表
+                const participantMap = {};
+                data.participants.forEach((p, index) => {
+                    participantMap[p.id] = index;
+                });
+
+                const participantCount = data.participants.length;
+
+                // 计算内容所需空间（基于基准尺寸）
+                const requiredDimensions = calculateRequiredDimensions(data);
+
+                // 获取容器尺寸（使用 getBoundingClientRect 获取实际渲染尺寸）
+                // 现在容器高度已经基于新的窗口大小重新计算了
+                let containerRect = container.getBoundingClientRect();
+                let containerWidth = containerRect.width || container.offsetWidth || 800;
+                let containerHeight = containerRect.height || container.offsetHeight || 600;
+
+                // 如果容器高度为0或很小，使用视口高度计算
+                if (containerHeight < 100) {
+                    // 估算可用高度：视口高度减去其他内容（页眉、页脚等）
+                    const viewportHeight = window.innerHeight || 800;
+                    containerHeight = Math.max(400, viewportHeight - 400); // 预留400px给其他内容
+                }
+
+                // 根据实际内容尺寸和可用空间计算缩放因子
+                const scale = calculateScale(
+                    containerWidth,
+                    containerHeight,
+                    requiredDimensions.width,
+                    requiredDimensions.height
+                );
+
+                // 固定消息线宽度为2px，不随scale缩放
+                // 将CSS变量设置在innerContainer上，确保消息线能够正确继承
+                // 四舍五入到整数像素，避免子像素渲染问题
+                const messageLineHeight = Math.round(BASE_SIZES.messageLineHeight); // 固定值，不乘以scale，四舍五入到整数
+                innerContainer.style.setProperty('--message-line-width', messageLineHeight + 'px');
+
+                // 渲染参与者
+                const participantsDiv = document.createElement('div');
+                participantsDiv.className = 'participants';
+
+                // 计算统一的参与者框宽度（自适应但一致，考虑缩放）
+                const calculateParticipantWidth = function () {
+                    const padding = BASE_SIZES.containerPadding * scale * 2; // 左右各2rem
+                    const gap = BASE_SIZES.participantGap * scale * (participantCount - 1);
+                    const availableWidth = containerWidth - padding - gap;
+                    const calculatedWidth = Math.floor(availableWidth / participantCount);
+                    // 限制在缩放后的最小和最大宽度之间
+                    const minWidth = BASE_SIZES.participantMinWidth * scale;
+                    const maxWidth = BASE_SIZES.participantMaxWidth * scale;
+                    return Math.max(minWidth, Math.min(maxWidth, calculatedWidth));
+                };
+
+                // 设置内层容器的内边距（考虑缩放）
+                const diagramPadding = BASE_SIZES.containerPadding * scale;
+                innerContainer.style.padding = diagramPadding + 'px 0';
+
+                // 使用requestAnimationFrame确保容器宽度已确定
+                const renderParticipants = function () {
+                    const participantWidth = calculateParticipantWidth();
+
+                    // 计算缩放后的尺寸
+                    const participantPaddingX = BASE_SIZES.participantPadding.x * scale;
+                    const participantPaddingY = BASE_SIZES.participantPadding.y * scale;
+                    const participantBorder = BASE_SIZES.participantBorder * scale;
+                    const participantFontSize = BASE_SIZES.participantFontSize * scale;
+                    const participantAliasFontSize = BASE_SIZES.participantAliasFontSize * scale;
+                    const participantLineWidth = BASE_SIZES.participantLineWidth * scale;
+                    const participantsContainerPadding = BASE_SIZES.containerPadding * scale;
+                    const participantGap = BASE_SIZES.participantGap * scale;
+
+                    // 设置参与者容器的内边距
+                    participantsDiv.style.padding = '0 ' + participantsContainerPadding + 'px';
+                    participantsDiv.style.marginBottom = participantGap + 'px';
+
+                    // 创建顶部参与者
+                    data.participants.forEach((participant, index) => {
+                        const participantDiv = document.createElement('div');
+                        participantDiv.className = 'participant';
+                        participantDiv.style.padding = '0 ' + (participantGap / 2) + 'px';
+
+                        const box = document.createElement('div');
+                        box.className = 'participant-box';
+                        box.style.width = participantWidth + 'px';
+                        box.style.padding = participantPaddingY + 'px ' + participantPaddingX + 'px';
+                        box.style.borderWidth = participantBorder + 'px';
+
+                        const name = document.createElement('div');
+                        name.className = 'participant-name';
+                        name.textContent = participant.name;
+                        name.style.fontSize = participantFontSize + 'px';
+
+                        if (participant.alias && participant.alias !== participant.name) {
+                            const alias = document.createElement('div');
+                            alias.className = 'participant-alias';
+                            alias.textContent = participant.alias;
+                            alias.style.fontSize = participantAliasFontSize + 'px';
+                            box.appendChild(name);
+                            box.appendChild(alias);
+                        } else {
+                            box.appendChild(name);
+                        }
+                        participantDiv.appendChild(box);
+
+                        const line = document.createElement('div');
+                        line.className = 'participant-line';
+                        // line.style.width = participantLineWidth + 'px';
+                        participantDiv.appendChild(line);
+
+                        participantsDiv.appendChild(participantDiv);
+                    });
+
+                    innerContainer.appendChild(participantsDiv);
+
+                    // 渲染完成后继续处理消息和底部参与者
+                    renderMessages();
+                };
+
+                // 渲染消息的函数
+                const renderMessages = function () {
+                    const messagesDiv = document.createElement('div');
+                    messagesDiv.className = 'messages';
+
+                    // 计算缩放后的消息相关尺寸
+                    // 消息线宽度固定为2px，不随scale缩放（用于箭头对齐计算）
+                    const messageLineHeight = BASE_SIZES.messageLineHeight; // 固定值，不乘以scale
+                    const messageArrowWidth = BASE_SIZES.messageArrowSize.width * scale;
+                    const messageArrowHeight = BASE_SIZES.messageArrowSize.height * scale;
+                    const messageLabelFontSize = BASE_SIZES.messageLabelFontSize * scale;
+                    const messageLabelPaddingX = BASE_SIZES.messageLabelPadding.x * scale;
+                    const messageLabelPaddingY = BASE_SIZES.messageLabelPadding.y * scale;
+                    const messageLabelMaxWidth = BASE_SIZES.messageLabelMaxWidth * scale;
+                    const messageLabelDetailsMaxWidth = BASE_SIZES.messageLabelDetailsMaxWidth * scale;
+                    const messageTimeFontSize = BASE_SIZES.messageTimeFontSize * scale;
+                    const messageTitleFontSize = BASE_SIZES.messageTitleFontSize * scale;
+                    const messageMargin = BASE_SIZES.messageMargin * scale;
+                    const messagePaddingBottom = BASE_SIZES.messagePaddingBottom * scale;
+
+                    // 设置消息容器的样式
+                    messagesDiv.style.margin = messageMargin + 'px 0';
+                    messagesDiv.style.paddingBottom = messagePaddingBottom + 'px';
+                    // 设置 gap（考虑缩放），使用 Flexbox 自动控制间距
+                    const messageGap = Math.max(20 * scale, BASE_SIZES.messageSpacing * scale * 0.3); // 最小 20px，或基于基准间距的30%
+                    messagesDiv.style.gap = messageGap + 'px';
+
+                    // 计算参与者位置（使用 requestAnimationFrame 确保 DOM 已渲染）
+                    const participantPositions = [];
+                    const updateParticipantPositions = function () {
+                        const participantElements = participantsDiv.querySelectorAll('.participant');
+                        participantElements.forEach(function (element, index) {
+                            const rect = element.getBoundingClientRect();
+                            const innerRect = innerContainer.getBoundingClientRect();
+                            participantPositions[index] = rect.left - innerRect.left + rect.width / 2;
+                        });
+                    };
+
+                    // 等待DOM渲染完成后再计算位置
+                    requestAnimationFrame(function () {
+                        updateParticipantPositions();
+                        // 如果位置未计算成功，使用估算值
+                        if (participantPositions.length === 0 || participantPositions[0] === 0) {
+                            const containerWidth = container.offsetWidth || 800;
+                            const spacing = containerWidth / participantCount;
+                            data.participants.forEach(function (_, index) {
+                                participantPositions[index] = (index + 0.5) * spacing;
+                            });
+                        }
+
+                        // 按时间排序消息（方案B：日期对象排序，更健壮）
+                        const sortedMessages = [...data.messages].sort((a, b) => {
+                            const timeA = a.time || '';
+                            const timeB = b.time || '';
+
+                            // 处理不完整时间（包含XX的情况）
+                            // 将XX替换为00，或者将其排到最后
+                            const normalizeTime = (timeStr) => {
+                                if (!timeStr || timeStr.includes('XX')) {
+                                    // 不完整时间排到最后，使用一个很大的日期
+                                    return '9999-12-31 23:59:59';
+                                }
+                                return timeStr;
+                            };
+
+                            const normalizedA = normalizeTime(timeA);
+                            const normalizedB = normalizeTime(timeB);
+
+                            // 使用 Date 对象进行精确比较
+                            // 将 "YYYY-MM-DD HH:MM:SS" 格式转换为 "YYYY-MM-DDTHH:MM:SS" 以便 Date 解析
+                            const dateA = new Date(normalizedA.replace(' ', 'T'));
+                            const dateB = new Date(normalizedB.replace(' ', 'T'));
+
+                            return dateA - dateB;
+                        });
+
+                        sortedMessages.forEach((message) => {
+                            const fromIndex = participantMap[message.from];
+                            const toIndex = participantMap[message.to];
+
+                            if (fromIndex === undefined || toIndex === undefined) {
+                                return;
+                            }
+
+                            const fromX = participantPositions[fromIndex] || 0;
+                            const toX = participantPositions[toIndex] || 0;
+                            const isRight = toX > fromX;
+                            const startX = Math.min(fromX, toX);
+                            const endX = Math.max(fromX, toX);
+                            const lineLength = endX - startX;
+
+                            const messageDiv = document.createElement('div');
+                            messageDiv.className = 'message';
+                            // 移除 style.top 设置，让 Flexbox 自动处理垂直排列
+                            // 移除 style.margin 设置，使用父容器的 gap 控制间距
+                            // 设置最小高度，确保有足够空间容纳标签和箭头
+                            const minMessageHeight = Math.max(
+                                60 * scale,  // 基础高度
+                                messageLabelFontSize * 3 + messageLabelPaddingY * 2  // 标签高度
+                            );
+                            messageDiv.style.minHeight = minMessageHeight + 'px';
+                            // 设置 padding-top，为向上偏移的标签留出空间
+                            messageDiv.style.paddingTop = (16 * scale) + 'px';
+
+                            // 定义统一的基准位置（与 paddingTop 一致）
+                            const baseTop = (16 * scale);
+
+                            // 消息线（粗细由CSS变量统一控制，统一使用实线）
+                            const line = document.createElement('div');
+                            line.className = 'message-line';
+                            line.style.left = startX + 'px';
+                            line.style.width = lineLength + 'px';
+                            // height 由 CSS 变量 --message-line-width 统一控制，确保所有消息线粗细一致
+                            line.style.top = baseTop + 'px';
+                            messageDiv.appendChild(line);
+
+                            // 箭头
+                            const arrow = document.createElement('div');
+                            arrow.className = 'message-arrow ' + (isRight ? 'right' : 'left');
+                            // 方案一：箭头顶点对齐线的端点
+                            // 右箭头：顶点应该在 endX，所以 left = endX - messageArrowWidth
+                            // 左箭头：顶点应该在 startX，所以 left = startX
+                            arrow.style.left = (isRight ? (endX - messageArrowWidth) : startX) + 'px';
+                            // 垂直对齐：箭头中心与线中心对齐
+                            // 线的中心Y = baseTop + (messageLineHeight / 2)
+                            // 箭头中心Y = arrow.top + messageArrowHeight（箭头总高度12px，中心在6px处）
+                            // 要让箭头中心 = 线中心，需要：arrow.top = baseTop + (messageLineHeight / 2) - messageArrowHeight
+                            arrow.style.top = (baseTop + (messageLineHeight / 2) - messageArrowHeight) + 'px';
+                            if (isRight) {
+                                arrow.style.borderWidth = messageArrowHeight + 'px 0 ' + messageArrowHeight + 'px ' + messageArrowWidth + 'px';
+                            } else {
+                                arrow.style.borderWidth = messageArrowHeight + 'px ' + messageArrowWidth + 'px ' + messageArrowHeight + 'px 0';
+                            }
+                            messageDiv.appendChild(arrow);
+
+                            // 标签 - 双层结构：默认显示 time + title，hover 显示详细信息
+                            const label = document.createElement('div');
+                            label.className = 'message-label';
+                            label.style.left = (startX + lineLength / 2) + 'px';
+                            label.style.fontSize = messageLabelFontSize + 'px';
+                            label.style.padding = messageLabelPaddingY + 'px ' + messageLabelPaddingX + 'px';
+                            // 调整标签位置：使用 margin-top 替代 top，避免超出消息元素边界
+                            label.style.top = '0px';
+                            label.style.marginTop = '-' + (12 * scale) + 'px'; // 向上偏移，但保持在元素内
+
+                            // 简化内容（默认显示）
+                            const simpleContent = document.createElement('div');
+                            simpleContent.className = 'message-label-simple';
+                            simpleContent.style.maxWidth = messageLabelMaxWidth + 'px';
+
+                            const timeSpan = document.createElement('span');
+                            timeSpan.className = 'message-time';
+                            timeSpan.textContent = message.time || '';
+                            timeSpan.style.fontSize = messageTimeFontSize + 'px';
+
+                            const titleSpan = document.createElement('span');
+                            titleSpan.className = 'message-title';
+                            titleSpan.textContent = message.title || '';
+                            titleSpan.style.fontSize = messageTitleFontSize + 'px';
+
+                            simpleContent.appendChild(timeSpan);
+                            simpleContent.appendChild(titleSpan);
+
+                            // 详细信息（hover 显示）
+                            const detailsContent = document.createElement('div');
+                            detailsContent.className = 'message-label-details';
+                            detailsContent.innerHTML = message.content || '';
+                            detailsContent.style.maxWidth = messageLabelDetailsMaxWidth + 'px';
+                            detailsContent.style.fontSize = messageTitleFontSize + 'px';
+                            label.appendChild(simpleContent);
+                            label.appendChild(detailsContent);
+                            // 设置 hover 时的 max-width 和 padding
+                            label.addEventListener('mouseenter', function () {
+                                this.style.maxWidth = messageLabelDetailsMaxWidth + 'px';
+                                // 减小 padding-top，与默认状态保持一致
+                                this.style.paddingTop = messageLabelPaddingY + 'px'; // 保持 0.25rem
+                                this.style.paddingBottom = (messageLabelPaddingY * 3) + 'px'; // 0.75rem = 0.25rem * 3
+                            });
+                            // 恢复默认 padding（虽然默认也是这个值，但为了代码清晰可以保留）
+                            label.addEventListener('mouseleave', function () {
+                                this.style.paddingTop = messageLabelPaddingY + 'px';
+                                this.style.paddingBottom = messageLabelPaddingY + 'px';
+                            });
+                            messageDiv.appendChild(label);
+
+                            messagesDiv.appendChild(messageDiv);
+                            // 移除 messageY 累加逻辑，Flexbox 自动处理排列
+                        });
+
+                        // Flexbox 会自动计算容器高度，不再需要手动计算
+                        // 只需要设置一个最小高度作为备用
+                        // messagesDiv.style.minHeight 由 Flexbox 自动管理
+
+                        innerContainer.appendChild(messagesDiv);
+
+                        // 创建底部参与者（与顶部对称）
+                        const participantsBottomDiv = document.createElement('div');
+                        participantsBottomDiv.className = 'participants-bottom';
+
+                        const participantWidth = calculateParticipantWidth();
+                        const participantPaddingX = BASE_SIZES.participantPadding.x * scale;
+                        const participantPaddingY = BASE_SIZES.participantPadding.y * scale;
+                        const participantBorder = BASE_SIZES.participantBorder * scale;
+                        const participantFontSize = BASE_SIZES.participantFontSize * scale;
+                        const participantAliasFontSize = BASE_SIZES.participantAliasFontSize * scale;
+                        const participantsContainerPadding = BASE_SIZES.containerPadding * scale;
+                        const participantGap = BASE_SIZES.participantGap * scale;
+
+                        // 设置底部参与者容器的内边距
+                        participantsBottomDiv.style.padding = '0 ' + participantsContainerPadding + 'px';
+                        participantsBottomDiv.style.marginTop = participantGap + 'px';
+
+                        data.participants.forEach((participant, index) => {
+                            const participantDiv = document.createElement('div');
+                            participantDiv.className = 'participant';
+                            participantDiv.style.padding = '0 ' + (participantGap / 2) + 'px';
+
+                            const box = document.createElement('div');
+                            box.className = 'participant-box';
+                            box.style.width = participantWidth + 'px';
+                            box.style.padding = participantPaddingY + 'px ' + participantPaddingX + 'px';
+                            box.style.borderWidth = participantBorder + 'px';
+
+                            const name = document.createElement('div');
+                            name.className = 'participant-name';
+                            name.textContent = participant.name;
+                            name.style.fontSize = participantFontSize + 'px';
+
+                            if (participant.alias && participant.alias !== participant.name) {
+                                const alias = document.createElement('div');
+                                alias.className = 'participant-alias';
+                                alias.textContent = participant.alias;
+                                alias.style.fontSize = participantAliasFontSize + 'px';
+                                box.appendChild(name);
+                                box.appendChild(alias);
+                            } else {
+                                box.appendChild(name);
+                            }
+                            participantDiv.appendChild(box);
+                            participantsBottomDiv.appendChild(participantDiv);
+                        });
+
+                        innerContainer.appendChild(participantsBottomDiv);
+
+                        // 计算并更新参与者线的位置和长度
+                        // 需要等待DOM渲染完成后再计算，确保精确连接上下节点边缘
+                        requestAnimationFrame(function () {
+                            // Flexbox 已经自动计算了消息容器的高度，无需手动设置
+                            // 只需要确保有足够的底部间距
+                            const extraBottomSpacing = 20 * scale;
+                            messagesDiv.style.paddingBottom = (messagePaddingBottom + extraBottomSpacing) + 'px';
+
+                            // 获取参与者元素（用于后续计算和设置容器高度）
+                            const topParticipants = innerContainer.querySelector('.participants');
+                            const bottomParticipants = innerContainer.querySelector('.participants-bottom');
+
+                            // 计算实际内容总高度并动态设置容器高度
+                            if (topParticipants && bottomParticipants && messagesDiv) {
+                                // 获取各个部分的实际高度（Flexbox 自动计算）
+                                const topHeight = topParticipants.offsetHeight;
+                                const messagesHeight = messagesDiv.offsetHeight; // Flexbox 自动计算，无需手动累加
+                                const bottomHeight = bottomParticipants.offsetHeight;
+                                const containerPadding = BASE_SIZES.containerPadding * scale * 2; // 上下各2rem
+                                const messagesMargin = messageMargin * 2; // 上下各一个 margin
+                                // 获取底部参与者的 marginTop（offsetHeight 不包含 margin）
+                                const bottomMarginTop = BASE_SIZES.participantGap * scale;
+
+                                // 计算总高度（包含消息容器的 margin 和底部参与者的 marginTop）
+                                const totalContentHeight =
+                                    topHeight +
+                                    messagesHeight +
+                                    messagesMargin +
+                                    bottomHeight +
+                                    bottomMarginTop +  // 加上底部参与者的 marginTop
+                                    containerPadding;
+
+                                // 动态设置容器高度，确保内容完全显示且无滚动条
+                                container.style.height = totalContentHeight + 'px';
+                            }
+
+                            if (!topParticipants || !bottomParticipants) {
+                                return;
+                            }
+
+                            const topParticipantDivs = topParticipants.querySelectorAll('.participant');
+                            const bottomParticipantDivs = bottomParticipants.querySelectorAll('.participant');
+                            const participantLines = topParticipants.querySelectorAll('.participant-line');
+
+                            // 获取容器相对于视口的位置
+                            const containerRect = container.getBoundingClientRect();
+
+                            // 为每个参与者线单独计算精确位置
+                            participantLines.forEach(function (line, index) {
+                                const topParticipantDiv = topParticipantDivs[index];
+                                const bottomParticipantDiv = bottomParticipantDivs[index];
+
+                                if (!topParticipantDiv || !bottomParticipantDiv) {
+                                    return;
+                                }
+
+                                const topBox = topParticipantDiv.querySelector('.participant-box');
+                                const bottomBox = bottomParticipantDiv.querySelector('.participant-box');
+
+                                if (!topBox || !bottomBox) {
+                                    return;
+                                }
+
+                                // 获取各个元素的位置信息
+                                const topParticipantRect = topParticipantDiv.getBoundingClientRect();
+                                const topBoxRect = topBox.getBoundingClientRect();
+                                const bottomBoxRect = bottomBox.getBoundingClientRect();
+
+                                // 计算线应该从顶部participant div的哪个位置开始
+                                // 即：顶部框底部相对于顶部participant div顶部的偏移
+                                const lineStartOffset = topBoxRect.bottom - topParticipantRect.top;
+
+                                // 计算线的高度：从顶部框底部到底部框顶部
+                                const lineHeight = bottomBoxRect.top - topBoxRect.bottom;
+
+                                // 设置线的位置和高度
+                                line.style.top = lineStartOffset + 'px';
+                                line.style.height = Math.max(lineHeight, 0) + 'px';
+                                // 显式设置z-index，确保线在最上层（CSS已设置，这里作为双重保障）
+                                line.style.zIndex = '10';
+                            });
+
+                            // 初始化拖拽功能（在渲染完成后，等待下一个帧确保尺寸计算正确）
+                            requestAnimationFrame(function () {
+                                initDragPan(container, innerContainer);
+                            });
+                        });
+                    });
+                };
+
+                // 开始渲染：先等待容器宽度确定
+                if (container.offsetWidth === 0) {
+                    // 如果容器宽度还未确定，等待一下
+                    requestAnimationFrame(function () {
+                        requestAnimationFrame(renderParticipants);
+                    });
+                } else {
+                    renderParticipants();
+                }
+            });
+        }
+
+        // 页面加载完成后渲染时序图，并设置窗口大小变化监听
+        (function () {
+            const timelineDataElement = document.getElementById('timeline-data');
+            if (timelineDataElement) {
+                try {
+                    const timelineData = JSON.parse(timelineDataElement.textContent);
+                    if (timelineData && timelineData.participants && timelineData.messages) {
+                        const renderDiagram = function () {
+                            const container = document.getElementById('timeline-diagram');
+                            if (container) {
+                                renderSequenceDiagram(timelineData);
+                            }
+                        };
+
+                        // 初始渲染
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', function () {
+                                renderDiagram();
+                                // 设置窗口大小变化监听
+                                setupWindowResizeListener(timelineData);
+                            });
+                        } else {
+                            renderDiagram();
+                            // 设置窗口大小变化监听
+                            setupWindowResizeListener(timelineData);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to parse timeline data:', e);
+                }
+            }
+        })();
+
+        // 设置窗口大小变化监听（只监听窗口变化，不监听容器尺寸变化，避免循环触发）
+        function setupWindowResizeListener(data) {
+            // 使用防抖函数包装渲染函数，避免频繁重渲染
+            const debouncedRender = debounce(function () {
+                // 重新渲染时序图
+                renderSequenceDiagram(data);
+            }, 300);
+
+            // 只监听窗口大小变化，不监听容器尺寸变化
+            // 这样可以避免 JavaScript 动态设置容器高度时触发循环渲染
+            window.addEventListener('resize', debouncedRender);
+        }
+
+        // 初始化拖拽平移功能
+        function initDragPan(container, innerContainer) {
+            // 如果已经初始化过，先移除旧的事件监听器
+            if (container._dragPanHandlers) {
+                container.removeEventListener('mousedown', container._dragPanHandlers.mouseDown);
+                document.removeEventListener('mousemove', container._dragPanHandlers.mouseMove);
+                document.removeEventListener('mouseup', container._dragPanHandlers.mouseUp);
+                container.removeEventListener('mouseleave', container._dragPanHandlers.mouseLeave);
+                container.removeEventListener('touchstart', container._dragPanHandlers.touchStart);
+                document.removeEventListener('touchmove', container._dragPanHandlers.touchMove);
+                document.removeEventListener('touchend', container._dragPanHandlers.touchEnd);
+                container.removeEventListener('touchcancel', container._dragPanHandlers.touchCancel);
+                if (container._dragPanHandlers.resize) {
+                    window.removeEventListener('resize', container._dragPanHandlers.resize);
+                }
+            }
+
+            let isDragging = false;
+            let isTouchDevice = false;
+            let startX = 0;
+            let startY = 0;
+            let currentTranslateX = 0;
+            let currentTranslateY = 0;
+            let lastTranslateX = 0;
+            let lastTranslateY = 0;
+
+            // 计算边界限制
+            function calculateBounds() {
+                const containerRect = container.getBoundingClientRect();
+
+                const containerWidth = containerRect.width;
+                const containerHeight = containerRect.height;
+
+                // 使用 scrollWidth 和 scrollHeight 获取实际内容尺寸（不受 CSS 限制影响）
+                const innerWidth = innerContainer.scrollWidth;
+                const innerHeight = innerContainer.scrollHeight;
+
+                // 如果内容小于容器，不需要拖拽
+                if (innerWidth <= containerWidth && innerHeight <= containerHeight) {
+                    return {
+                        minX: 0,
+                        maxX: 0,
+                        minY: 0,
+                        maxY: 0,
+                        canDrag: false
+                    };
+                }
+
+                // 计算可拖动的范围
+                // 当内容大于容器时，可以拖动的距离 = 内容尺寸 - 容器尺寸
+                const maxTranslateX = Math.max(0, innerWidth - containerWidth);
+                const maxTranslateY = Math.max(0, innerHeight - containerHeight);
+
+                return {
+                    minX: -maxTranslateX,
+                    maxX: 0,
+                    minY: -maxTranslateY,
+                    maxY: 0,
+                    canDrag: true
+                };
+            }
+
+            // 应用边界限制
+            function clamp(value, min, max) {
+                return Math.max(min, Math.min(max, value));
+            }
+
+            // 应用 transform
+            function applyTransform(x, y) {
+                const bounds = calculateBounds();
+                if (!bounds.canDrag) {
+                    // 如果内容小于容器，重置位置
+                    innerContainer.style.transform = 'translate(0, 0)';
+                    currentTranslateX = 0;
+                    currentTranslateY = 0;
+                    lastTranslateX = 0;
+                    lastTranslateY = 0;
+                    return;
+                }
+
+                // 应用边界限制
+                const clampedX = clamp(x, bounds.minX, bounds.maxX);
+                const clampedY = clamp(y, bounds.minY, bounds.maxY);
+
+                innerContainer.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+                currentTranslateX = clampedX;
+                currentTranslateY = clampedY;
+            }
+
+            // 统一获取事件坐标的函数
+            function getEventCoordinates(e) {
+                // 触摸事件
+                if (e.touches && e.touches.length > 0) {
+                    return {
+                        x: e.touches[0].clientX,
+                        y: e.touches[0].clientY
+                    };
+                }
+                // 鼠标事件
+                return {
+                    x: e.clientX,
+                    y: e.clientY
+                };
+            }
+
+            // 统一的开始拖拽函数（支持鼠标和触摸）
+            function handleStart(e) {
+                // 检测是否为触摸事件
+                if (e.touches) {
+                    isTouchDevice = true;
+                }
+                // 如果是触摸设备，忽略后续的鼠标事件（防止冲突）
+                if (isTouchDevice && !e.touches) {
+                    return;
+                }
+
+                // 检查是否点击在可交互元素上（如消息标签）
+                if (e.target.closest('.message-label')) {
+                    return; // 不处理，让标签的交互正常工作
+                }
+
+                // 如果是触摸事件，阻止默认行为（防止页面滚动）
+                if (e.touches) {
+                    e.preventDefault();
+                }
+
+                isDragging = true;
+                container.classList.add('dragging');
+
+                const coords = getEventCoordinates(e);
+                startX = coords.x;
+                startY = coords.y;
+                lastTranslateX = currentTranslateX;
+                lastTranslateY = currentTranslateY;
+
+                // 阻止默认行为，防止选中文本
+                e.preventDefault();
+            }
+
+            // 统一的移动函数（支持鼠标和触摸）
+            function handleMove(e) {
+                if (!isDragging) return;
+
+                // 如果是触摸设备，忽略鼠标事件
+                if (isTouchDevice && !e.touches) {
+                    return;
+                }
+
+                // 触摸事件时阻止默认行为
+                if (e.touches) {
+                    e.preventDefault();
+                }
+
+                const coords = getEventCoordinates(e);
+                const deltaX = coords.x - startX;
+                const deltaY = coords.y - startY;
+
+                const newX = lastTranslateX + deltaX;
+                const newY = lastTranslateY + deltaY;
+
+                applyTransform(newX, newY);
+            }
+
+            // 统一的结束函数（支持鼠标和触摸）
+            function handleEnd(e) {
+                if (isDragging) {
+                    isDragging = false;
+                    container.classList.remove('dragging');
+                    lastTranslateX = currentTranslateX;
+                    lastTranslateY = currentTranslateY;
+                }
+                // 延迟重置触摸设备标志，防止触摸后立即触发鼠标事件
+                if (e.changedTouches) {
+                    setTimeout(() => { isTouchDevice = false; }, 300);
+                }
+            }
+
+            // 鼠标离开容器事件
+            function handleMouseLeave() {
+                if (isDragging) {
+                    isDragging = false;
+                    container.classList.remove('dragging');
+                    lastTranslateX = currentTranslateX;
+                    lastTranslateY = currentTranslateY;
+                }
+            }
+
+            // 绑定鼠标事件（电脑端）
+            container.addEventListener('mousedown', handleStart);
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('mouseup', handleEnd);
+            container.addEventListener('mouseleave', handleMouseLeave);
+
+            // 绑定触摸事件（手机端）
+            container.addEventListener('touchstart', handleStart, { passive: false });
+            document.addEventListener('touchmove', handleMove, { passive: false });
+            document.addEventListener('touchend', handleEnd);
+            container.addEventListener('touchcancel', handleEnd);
+
+            // 初始化位置
+            applyTransform(0, 0);
+
+            // 窗口大小变化时重新计算边界
+            const handleResize = debounce(function () {
+                applyTransform(currentTranslateX, currentTranslateY);
+            }, 100);
+            window.addEventListener('resize', handleResize);
+
+            // 保存事件处理函数引用，以便后续移除
+            container._dragPanHandlers = {
+                mouseDown: handleStart,
+                mouseMove: handleMove,
+                mouseUp: handleEnd,
+                mouseLeave: handleMouseLeave,
+                touchStart: handleStart,
+                touchMove: handleMove,
+                touchEnd: handleEnd,
+                touchCancel: handleEnd,
+                resize: handleResize
+            };
+        }
+    </script>
+</body>
+
+</html>
