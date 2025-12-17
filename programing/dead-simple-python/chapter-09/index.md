@@ -1007,8 +1007,8 @@ if "mocha cappuccino" in orders:
 把要检查的值放在 in 运算符的左侧，要搜索的集合放在 in 运算符的右侧。如果在集合中
 找到该值的至少一个实例，则 in 运算符返回 True，否则返回 False。
 
-还可以检查列表是否遗漏特定元素。例如，如果现在没有人喝 drip 咖啡，则不妨关闭咖
-啡机。
+还可以检查列表是否遗漏特定元素。例如，如果现在没有人喝 drip 咖啡，则不妨关闭咖啡
+机。
 
 ```python
 if 'drip' not in orders:
@@ -1083,11 +1083,12 @@ print(average_orders)       # 42
 
 ### 9.9.2 手动使用迭代器
 
-我们分别直接调用特殊方法和饮食调用特殊方法演示：
+我们分别直接调用特殊方法和隐式调用特殊方法演示：
 
 ```py
 specials = ['pumpkin spice latte', 'caramel macchiato', 'mocha cappucciono']
 
+# 获取可迭代对象 specials 的迭代器
 first_iterator = specials.__iter__()
 specials_iterator = specials.__iter__()
 
@@ -1096,3 +1097,292 @@ print(type(first_iterator))     # <class 'list_iterator'>
 
 和所有可迭代对象一样，列表实现了特殊方法 `__iter__()`，该方法返回列表的迭代器。
 我们获取了两个独立的迭代器，每个迭代器可单独运行。
+
+当检查 first_iterator 的数据类型时，可以看到它是 list_iterator 类的一个实例，正
+如输出所示：
+
+```shell
+# <class 'list_iterator'>
+```
+
+使用迭代器访问 specials 列表：
+
+```py
+item = first_iterator.__next__()
+print(item)     # pumpkin spice latte
+```
+
+首次调用迭代器的 `__next__()`方法后，访问的是列表中的第一个元素，将返回值绑定到
+item 并输出到屏幕：
+
+```shell
+pumpkin spice latte
+```
+
+随后的调用进一步推进并返回列表中的第二个元素：
+
+```py
+item = first_iterator.__next__()
+print(item)     # caramel macchiato
+```
+
+每个迭代器会分别跟踪其在可迭代对象中的位置。如果在 second_iterator 上调用
+`__next__()` 方法时，则只前进到列表中的第一个元素并将其返回，如清单 9-77 所示：
+
+```python
+item = second_iterator.__next__()
+print(item)
+```
+
+输出如下所示：
+
+```shell
+pumpkin spice latte
+```
+
+然而，first_iterator 仍然记得自己的位置，并且可以推进到到列表中的第三项，如清单
+9-78 所示：
+
+```py
+item = first_iterator.__next__()
+print(item)
+```
+
+输出如下：
+
+```shell
+mocha cappucciono
+```
+
+一旦迭代器完成了对可迭代对象的遍历，再次调用 `__next__()` 就会引发特殊异常
+StopIteration，如清单 9-79 所示：
+
+```py
+item = first_iterator.__next__()        # raises StopIteration
+```
+
+值得庆幸的是，无论在什么情况下，都不需要手动调用 `__iter__()` 和 `__next__()`。
+相反，可以使用 Python 内置函数 iter() 和 next()，并分别传入可迭代对象和迭代器。
+特使方法在幕后自动被调用。
+
+清单 9-80 所示为同一示例，但使用的是内置函数。
+
+```py
+specials = ['pumpkin spice latte', 'caramel macchiato', 'mocha cappucciono']
+
+first_iterator = iter(specials)
+second_iterator = iter(specials)
+
+print(type(first_iterator))     # <class 'list_iterator'>
+item = next(first_iterator)
+print(item)                     # pumpkin spice latte
+
+item = next(first_iterator)
+print(item)                     # caramel macchiato
+
+item = next(second_iterator)
+print(item)                     # pumpkin spice latte
+
+item = next(first_iterator)
+print(item)                     # mocha cappucciono
+
+next(first_iterator)            # raises StopIteration
+```
+
+如我们所见，这种手动方法中存在很多重复，这表明可以使用循环来处理迭代。事实上，使
+用 for 循环是处理迭代的标准方式，因为这样会隐式调用 iter() 和 next()，不需要手动
+调用。然而为了解释其底层机制，下面把这个相同的手动迭代逻辑封装在一个 while 循环
+中，如清单 9-81 所示：
+
+```py
+# 使用 while 遍历
+specials = ['pumpkin spice latte', 'caramel macchiato', 'mocha cappucciono']
+iterator = iter(specials)
+
+while True:
+    try:
+        item = next(iterator)
+    except StopIteration:
+        break
+    else:
+        print(item)
+```
+
+以上代码首先获取 specials 列表的迭代器，然后在无限 while 循环中，尝试通过将迭代
+器传递给 next() 来访问可迭代对象中的下一个值。如果这引发了 StopIteration，则说明
+已经遍历了 specials 列表中的所有元素，从而可以使用 break 关键字跳出循环。否则，
+输出从迭代器中接收到的元素。
+
+虽然了解了如何手动褚经理迭代器很有帮助，但是很少需要这么做！for 循环几乎总能处理
+清单 9-81 所示的例子，如清单 9-82 所示：
+
+```py
+# 使用 for 循环遍历
+specials = ['pumpkin spice latte', 'caramel macchiato', 'mocha cappucciono']
+
+for item in specials:
+    print(item)
+```
+
+这样就不需要直接获取迭代器了。
+
+### 9.9.3 用 for 循环进行迭代
+
+对于循环和迭代来说，一个非常有用的规则是，永远不要用计数器变量进行循环控制。换句
+话说，Python 中几乎没有其他编程语言惯用的传统循环算法！Python 总是有更好的办法，
+这主要是因为可迭代对象能直接控制 for 循环。
+
+让我们看看在 Uncomment Cafe 排队的客户。对于排毒的每个人，咖啡师都会接受其订单、
+制作响应的咖啡并交付，如清单 9-83 所示：
+
+```py
+customers = ['Newman', 'Daniel', 'Simon', 'James', 'William', 'Kyle', 'Jason', 'Devin', 'Todd', 'Glen', 'Denis']
+
+for customer in customers:
+    print(f"Order for {customer}!")
+```
+
+遍历可迭代的 customers 列表。在每次迭代中，将当前元素绑定到 customer，使其像任何
+其他变量一样在循环代码块中工作。
+
+对于 customers 列表中的每个元素，输出一个字符串，以指明完成此次迭代的客户订单。
+
+线性集合非常简单。任何给定元素中具有多个值的迭代器，例如来自 item()字段视图或二
+维列表的迭代器，都必须区别对待。
+
+为了证明这一点，将 customers 重写为元组列表，其中每个元组包含一个名字和一个咖啡
+订单。然后遍历该列表以输出其内容，如清单 9-84 所示：
+
+```py
+customers = [
+    ('Newman', 'tea'),
+    ('Daniel', 'lemongrass tea'),
+    ('Simon', 'chai latte'),
+    ('James', 'medium roast drip, milk, 2 sugar substitutes'),
+    ('William', 'french press'),
+    ('Kyle', 'mocha cappuccino'),
+    ('Jason', 'pumpkin spice latte'),
+    ('Devin', 'double-shot espresso'),
+    ('Todd', 'dark roast drip'),
+    ('Glen', 'americano, no sugar, heavy cream'),
+    ('Denis', 'cold brew')
+]
+
+for customer, drink in customers:
+    print(f"Making {drink}...")
+    print(f"Order for {customer}!")
+```
+
+### 9.9.4 在循环中对集合进行排序
+
+### 9.9.5 枚举循环
+
+### 9.9.6 循环中的突变
+
+### 9.9.7 嵌套循环和替代方案
+
+如我们所料，可以进行循环嵌套。嵌套循环的应用场景之一如下：在举办咖啡品尝活动时，
+我们希望每位客人能品尝到每种咖啡，这时就需要这样一个程序，它将告诉我们将那种样品
+给谁。
+
+首先定义两个列表—— 一个 samples 和一个 guests 列表。如清单 9-93 所示：
+
+```py
+samples = ['Costa Rica', 'Kenya', 'Vietnam', 'Brazil']
+guests = ['Denis', 'William', 'Todd', 'Daniel', 'Glen']
+```
+
+然后遍历两个列表，如清单 9-94 所示：
+
+```py
+samples = ['Costa Rica', 'Kenya', 'Vietnam', 'Brazil']
+guests = ['Denis', 'William', 'Todd', 'Daniel', 'Glen']
+
+for sample in samples:
+    for guest in guests:
+        print(f"Give sample of {sample} coffee to {guest}.")
+```
+
+外层循环遍历 samples 列表。对于 samples 列表中的每个元素，内层循环都遍历 guests
+列表，为每位客人提供一份样品。
+
+运行这段代码将产生以下输出：
+
+```shell
+Give sample of Costa Rica coffee to Denis.
+Give sample of Costa Rica coffee to William.
+Give sample of Costa Rica coffee to Todd.
+Give sample of Costa Rica coffee to Daniel.
+Give sample of Costa Rica coffee to Glen.
+Give sample of Kenya coffee to Denis.
+Give sample of Kenya coffee to William.
+Give sample of Kenya coffee to Todd.
+Give sample of Kenya coffee to Daniel.
+Give sample of Kenya coffee to Glen.
+Give sample of Vietnam coffee to Denis.
+Give sample of Vietnam coffee to William.
+Give sample of Vietnam coffee to Todd.
+Give sample of Vietnam coffee to Daniel.
+Give sample of Vietnam coffee to Glen.
+Give sample of Brazil coffee to Denis.
+Give sample of Brazil coffee to William.
+Give sample of Brazil coffee to Todd.
+Give sample of Brazil coffee to Daniel.
+Give sample of Brazil coffee to Glen.
+```
+
+处于几个原因，使用嵌套循环很少被认为是 Python 中的最佳解决方案。首先，嵌套本身是
+Python 开发者乐于避免的事情，正如 Python 之禅所建议的：
+
+**扁平好过嵌套**
+
+嵌套结构的可读性更差且更加脆弱，这意味着它们很容易写错，因为它们依赖多级缩进
+。Python 开发者通常倾向于避免使用任何不必要的嵌套。更扁平、可读性更好的解决方案
+几乎总是首选。
+
+其次，跳出嵌套循环是不可能的。continue 和 break 关键字只能控制它们所在的循环，而
+不能控制其外层或内层循环。有一些“聪明”的方法可以解决这个问题，比如将嵌套循环放在
+函数中，并使用 return 语句退出函数。然而，这些方法增加了复杂性和嵌套层次，因此不
+推荐使用。
+
+每当考虑使用嵌套循环时，请思考是否有任何可行的替代方案。可以使用通用的 itertools
+模块中的 product()函数，在一次循环中获得与之前相同的结果，如清单 9-95 所示：
+
+```py
+from itertools import product
+
+samples = ['Costa Rica', 'Kenya', 'Vietnam', 'Brazil']
+guests = ['Denis', 'William', 'Todd', 'Daniel', 'Glen']
+
+for sample, guest in product(samples, guests):
+    print(f"Give sample of {sample} coffee to {guest}.")
+```
+
+itertools.product()函数能够将两个或多个可迭代对象组合为一个单独的可迭代对象，改
+可迭代对象包含元素的所有可能组合的元组。将每一个元组解包为对应名称后，就可以使用
+这些名称来访问循环组中的各个值。输出和之前完全相同。
+
+Python 内置的迭代函数和 itertools 模块基本涵盖了通常可能使用嵌套循环的所有常见场
+景。如果现有的函数满足不了需求，则可以编写自己的可迭代函数（称为生成器）或可迭代
+类。
+
+## 9.10 迭代工具
+
+Python 中很多方便的工具可用于迭代各种容器。可以查阅 Python 官方文档以了解他们的
+使用方法。本节介绍一些较为常见和使用的工具。
+
+### 9.10.1 基础内建工具
+
+Python 本身内置了很多迭代工具，其中每一个都要求至少传递一个可迭代对象。
+
+- all(): 在可迭代对象中所有项的计算结果都为 True 时，返回 True。
+- any(): 在可迭代对象中有任何项的计算结果为 True 时，返回 True。
+- enumerate(): 是一个迭代器，他对传递进来的迭代器内的所有元素返回一个元素。该元
+  组中的第一个只是元素的“索引”，第二个值是元素本身。它甚至适用于不可订阅的可迭代
+  对象。此工具可选择性地接受 start 参数，该参数定义了用作第一个索引的整数值。
+- max(): 返回可迭代对象中的最大项。此工具可选择性地接受 key 参数，该参数通常是可
+  调用的，用于指定要对结合项哪一部分进行排序。
+- min(): 和 max()相同，只不过返回的是可迭代对象中的最小项。
+- range(): 是一个迭代器，它返回从可选起始值（默认为 0）到小于结束值的整数序列。
+  可选的第三个参数用来约定步长。range(3) 可迭代产生值序列(0, 1, 2)，range(2, 5)
+  可迭代产生值序列(2, 3, 4)，range(1, 6, 2)可迭代产生值序列(1, 3, 5)。
