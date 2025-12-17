@@ -1273,9 +1273,94 @@ for customer, drink in customers:
     print(f"Order for {customer}!")
 ```
 
+以上代码在 for 循环中遍历了 customers 列表，将列表中的每个元组解包为两个名称
+customer 和 drink。
+
 ### 9.9.4 在循环中对集合进行排序
 
+循环还允许我们对数据进行更高级的处理。假设每个人都可以通过程序提交订单。我们可能
+想按照字母顺序对订单进行排序，以便更轻松地搜索数据。不过，还应该遵循先到先得的原
+则。因此不修改原始客户订单数据，原本的顺序仍然很重要。修改后的代码如清单 9-85 所
+示：
+
+```py
+customers = [
+    ('Newman', 'tea'),
+    ('Daniel', 'lemongrass tea'),
+    ('Simon', 'chai latte'),
+    ('James', 'medium roast drip, milk, 2 sugar substitutes'),
+    ('William', 'french press'),
+    ('Kyle', 'mocha cappuccino'),
+    ('Jason', 'pumpkin spice latte'),
+    ('Devin', 'double-shot espresso'),
+    ('Todd', 'dark roast drip'),
+    ('Glen', 'americano, no sugar, heavy cream'),
+    ('Denis', 'cold brew')
+]
+
+for _, drink in sorted(customers, key=lambda x: x [1]):
+    print(f"{drink}")
+```
+
+以上代码使用 sorted()函数对传递进来的任何集合进行重新排序并返回排序后的列表，默
+认情况下根据元素中的第一个值进行升序排序，在本例中，第一个元素是客户名称，但是我
+们想修改按照订单进行排序。可通过一个可调用的键函数传递给 key 参数来更改此行为。
+这个可调用的键函数在本例中是一个 lambda 表达式，它必须接收一个元素作为参数并返回
+我们想作为排序依据的值。在本例中，我们想按照每个元组中第二个元素来进行排序，就是
+按照 x[1]返回的值进行排序。完成这些操作之后，customers 列表保持不变。
+
+我们还注意到，在对元组进行解包时，使用了下划线来忽略每个元组中的第一个值，即客户
+名称，因为在此循环中不需要这个值。这通常是 for 循环中从元组挑选元素的最佳方式。
+另一方面，如果每个元素都是一个包含很多子元素的集合，那么将元素整体绑定到一个名称
+并在循环中访问需要的内容可能会更好。
+
 ### 9.9.5 枚举循环
+
+永远不需要使用计数器变量对循环进行控制。
+
+如果需要索引本身，Python 为这种场景提供了一个 enumerate()函数。使用此函数而不是
+手动索引的额外好处是，它适用于所有可迭代对象，甚至那些不可以通过下标访问的对象。
+
+使用 enumerate() 函数查看每位顾客的顺序，顺带查看他们的订单，如清单 9-86 所示：
+
+```py
+customers = [
+    ('Newman', 'tea'),
+    ('Daniel', 'lemongrass tea'),
+    ('Simon', 'chai latte'),
+    ('James', 'medium roast drip, milk, 2 sugar substitutes'),
+    ('William', 'french press'),
+    ('Kyle', 'mocha cappuccino'),
+    ('Jason', 'pumpkin spice latte'),
+    ('Devin', 'double-shot espresso'),
+    ('Todd', 'dark roast drip'),
+    ('Glen', 'americano, no sugar, heavy cream'),
+    ('Denis', 'cold brew')
+]
+
+for number, (customer, drink) in enumerate(customers, start=1):
+    print(f"#{number}. {customer}:{drink}")
+```
+
+enumerate()函数返回一个元组，元组的第一个元素就是类型为整数的计数值，第二个位置
+为集合中的元素。默认情况下，计数将从 0 开始，如果希望排在第一位的顾客显示为
+“#1”，可通过将 1 传递给 start 来覆盖这一默认值。
+
+程序运行后的输出如下：
+
+```
+#1. Newman:tea
+#2. Daniel:lemongrass tea
+#3. Simon:chai latte
+#4. James:medium roast drip, milk, 2 sugar substitutes
+#5. William:french press
+#6. Kyle:mocha cappuccino
+#7. Jason:pumpkin spice latte
+#8. Devin:double-shot espresso
+#9. Todd:dark roast drip
+#10. Glen:americano, no sugar, heavy cream
+#11. Denis:cold brew
+```
 
 ### 9.9.6 循环中的突变
 
