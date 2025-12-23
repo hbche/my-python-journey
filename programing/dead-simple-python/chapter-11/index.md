@@ -1,18 +1,615 @@
 # 第 11 章 文本输入\输出和上下文管理
 
+基于文本文件存储数据是最常见的数据存储方法，也是在程序运行之间保持状态的关键。
+
+本章将分解与文本文件协作相关的两个核心组件：流和类路径对象。本章还将介绍各种打开
+、阅读和写入文件的方式，以及如何使用文件系统，最后对常见的文件格式进行简要介绍。
+
 ## 11.1 标准输入和输出
+
+### 11.1.1 重温 print()
+
+print()函数接收一个赐福穿参数并将其输出到屏幕上。这很简单，但是 print()的功能并
+不仅限于此。还可以使用 print()以多种方式快速灵活地输出多个值，甚至可以用它来写入
+文件。
+
+#### 1. 标准流
+
+要想充分理解 print()的潜力，就必须理解流。当使用 print()时，你将字符串发送到标准
+输出流，这是操作系统提供的一种特殊通信通道。标准输出流的行为就像一个队列：我们将
+数据推送到流中，这些字符串就可以按顺序被其他程序或进程拾取。默认情况下，操作系统
+将提供给 print()的所有字符串都发送到标准输出流。
+
+操作系统还有一个标准错误流来显示错误消息。正常输出被发送到标准输出流，与错误相关
+的输出则被发送到标准错误流。
+
+```py
+print("Normal message")
+print("Scary error occurred")
+```
+
+假设用户想使用终端将所有程序的输出通过管道传输到文件中，使正常输出保存到一个文件
+中，而使错误输出保存到另一个文件中。下面是 bash 中的示例：
+
+```bash
+python print_error.py > output.txt 2> error.txt
+```
+
+用户希望 output.txt 包含正常信息，而希望 error.txt 包含发生的可怕错误。但是因为
+print()默认将消息发送到标准输出流，所以两种消息都被输出到 output.txt 中，而
+error.txr 完全是空的。
+
+要想将错误消息发送到错误流，就必须通过在 print()上使用 file 参数加以指定，如下所
+示：
+
+```py
+import sys
+
+print("Normal message")
+print("Scary error occurred", file=sys.stderr)
+```
+
+首先导入 sys 模块，这样才能范文 sys.stderr，这就是标准错误流的句柄。通过在第二次
+print()调用中指定参数 file=sys.stderr，即可将错误消息发送到表尊错误流。正常消息
+仍被发送到标准输出流，因为默认参数是 file=sys.stdout。
+
+复用之前的 shell 会话，用法一样，可以看到两种输出现在已被发送到预期的文件中。
+
+正如参数名称 file 所暗示的那样，print()函数并不限于标准流。事实上，我们马上就会
+看到它非常适用于将文本写入文件。
+
+#### 2. 刷新
+
+我们需要知道一个重要事实，标准流是作为缓冲区实现的：数据可以推送到缓冲区，其行为
+类似于队列。数据将在那里等待，直至被终端或任何想要显示其内容的进程拾取。
+
+通常最好让系统决定何时刷新标准流，而不是强制执行刷新。但是在某些情况下，我们可能
+想要强制执行刷新。例如，我们可能想在已显示的行的末尾追加一些内容。
+
+下面是个简单的进度指示器，它可以做到这一点。我们将使用 time.sleep()来指示正在运
+行一些耗时的进程，例如下载。
+
+```py
+import time
+
+print("Downloading", end="")
+for n in range(20):
+    print(".", end="", flush=True)
+    time.sleep(0.1)
+print("\nDownload completed!")
+```
+
+print()函数的 end 参数可以防止输出新行。该示例的重要部分是 flush 参数，如果忽略
+它，那么在循环结束之前，用户将看不到任何东西，因为缓冲区在输出到终端之前会等待换
+行符。但是通过强制刷新缓冲区，输出到终端的行会在每次循环迭代时更新。
+
+#### 3. 输出多个值
+
+print()函数可以接收多个数量的有序参数，每个参数都将使用 `__str__()`特殊方法转换
+为字符串。这是一种与 f- 字符串格式化相比更加快速且简便的替代方法。
+
+```py
+number = 245
+street = '8th Street'
+city = 'San Francisco'
+state = 'CA'
+zip_code = 94103
+
+print(f"{number} {street} {city} {street} {state} {zip_code}")
+```
+
+虽然这样是可行的，但是也可以在不使用 f-字符串的情况下完成这一任务，从而简化
+print()语句：
+
+```py
+print(number, street, city, street, state, zip_code)
+```
+
+print()语句会将每个参数转换为一个字符串，然后将各部分连接在一起，每两部分之间有
+一个空格（默认情况下）。在任何一种情况下，输出都是相同的：
+
+```shell
+245 8th Street San Francisco 8th Street CA 94103
+```
+
+我们也可以从字典中快速生成地址对应的房产价值表，如下所示：
+
+```py
+nearby_properties = {
+    "N. Anywhere Ave.": {
+        123: 156_852,
+        124: 157_923,
+        126: 163_812,
+        127: 144_121,
+        128: 166_356,
+    },
+    "N. Everywhere St.": {
+        4567: 175_753,
+        4568: 166_212,
+        4569: 185_123,
+    }
+}
+```
+
+我们想输出一个表格，其中包含街道、号码和格式化的房产价值，每两列之间使用制表符
+(\t)分隔。下面首先使用 f-字符串：
+
+```py
+for street, properties in nearby_properties.items():
+    for address, value in properties.items():
+        print(f"{street}\t{address}\t${value:,}")
+```
+
+f-字符串增加了不必要的复杂性。因为用制表符分隔每一列，所以可以再次利用 print()更
+好地完成这一任务，如下所示：
+
+```py
+for street, properties in nearby_properties.items():
+    for address, value in properties.items():
+        print(street, address, f"${value:,}", sep="\t")
+```
+
+sep 参数允许我们定义每两个值之间使用什么字符作为分隔符。sep 默认是一个空格，如上
+述示例所示，使用制表符(\t)作为分隔符。
+
+这种方案更具可读性，另外，如果要用空格和竖线字符分隔列，只需修改 sep 参数即可：
+
+```py
+for street, properties in nearby_properties.items():
+    for address, value in properties.items():
+        print(street, address, f"${value:,}", sep="  |  ")
+```
+
+如果使用了 f-字符串，则需要更改分离时的字符。
+
+print()函数还有一个 end 函数，用来指定要附加到输出末尾的内容。默认情况下，这是一
+个换行符(\n)，但是也可以像修改 sep 参数一样修改它。
+
+一种常见的方法是设置 end="\t"，这将导致输出的下一行覆盖上一行。这在状态更新中特
+别有用，例如进行进度提醒。
+
+### 11.1.2 重温 input()
+
+input()函数允许我们从终端（标准输入流）接收用户输入。和 print()函数不同，input()
+函数没有额外的功能。
+
+input()接收的唯一参数是 promp，这是一个可选字符串，输出到标准输出时不追加尾随换
+行符(\n)。传递给 prompt 的值通常是一条消息，用于通知用户应该输入什么。该参数可以
+是任何通过 `__str__()`方法转换为字符串的对象，和传递给 print()的有序参数相同。
 
 ## 11.2 流
 
+要想处理任何数据文件，我们需要获得一个流（又称文件对象或类文件对象），其提供读取
+和写入内存中的特定文件的方法。一般存在两种流：二进制流是所有流的基础，用来处理二
+进制数据（0 和 1）；文本流则处理二进制文件的编码和解码。
+
+普通的.txt 文件、Word 文档或我们拥有的任何其他文件都可以使用流来处理。我们已经使
+用过标准输出(sys.stdout)、标准输入(sys.stdin)和标准错误(sys.stderr)的对象实际上
+都是流。
+
+可以使用内置的 open()函数来创建处理文件的流。这个函数的使用有很多需要注意的地方
+，下面我们从它最简单的用法开始。
+
+假定每个文件都和打开它的 Python 模块位于同一目录中。如果文件在计算机上的其他地方
+，则需要一个路径，路径稍后将详细探讨。
+
+要想读取名为 213AnywhereAve.txt 的文件，需要创建一个流。Python 在后台完美地创建
+了文件流，所以只需要使用 open()函数，如下所示：
+
+```py
+house = open('213AnywhereAve.txt')
+print(house.read())
+house.close()
+```
+
+open()函数返回一个流对象 —— 具体来说，返回的是一个 TextIOWrapper 对象，用于处理
+213AnywhereAve.txt 文件的内容。将这个流对象绑定到 house。
+
+接下来，通过调用 house 的 read()方法将返回的字符串直接传递给 print()来输出读取到
+的全部内容。
+
+一旦完成了对文件的处理，就必须关闭这个流，以上代码的最后一行正式这么做的。重要的
+是不要让垃圾回收器来关闭文件，因为这既不能保证有效，也不能在所有 Python 实现中确
+保可移植。更重要的是，在写入文件时，直至调用 close()，Python 才能保证完成对文件
+的变更。这意味着如果忘记在程序结束前调用 close()，所做的更改可能会部分或全部丢失
+。
+
 ## 11.3 上下文管理器基础
+
+上下文管理器是一种对象，当程序执行留下一段代码或上下文时，它能自动处理自己的清理
+任务。此处的上下文由带有描述的 Python 代码提供。后续还会详细介绍上下文管理器的原
+理和详细实现。
+
+实际上在打开文件后，可以尝试执行更多的操作，而非仅仅输出文件内容。我们可能以多种
+方式处理数据，比如将其存储到集合中，或者搜索特殊内容。出现错误和异常的可能性很大
+。使用这种方法，如果成功打开文件，但是在阅读或使用文件时发生意外，那么 close()方
+法将永远不会被调用。
+
+为了解决这个问题，可以在一个 try 语句的 finally 子句中调用 close()，如下所示：
+
+```py
+house = open('213AnywhereAve.txt')
+try:
+    print(house.read())
+finally:
+    house.close()
+```
+
+如果 213AnywehereAve.txt 文件不存在，则出发 FileNotFoundError。如果能成功打开这
+个文件，就可以尝试从 house 流中执行 read()。由于没有观察到任何意外，因此代码会自
+动从这个 try 语句中穿过。又因为 close()调用在 finally 子句中，所以无论是否有错误
+，它都将被调用。
+
+但在实践中，应时刻记住调用 close()是完全不现实的，而且是一种痛苦。如果忘记了关闭
+流，抑或程序在我们调用 close()之前终止了，则可能导致各种错误。
+
+好在所有流对象都有上下文管理器，因此可以通过 with 语句完成自身清理。将这个
+try-finally 语句封装到一行代码中，如下所示：
+
+```py
+with open('213AnywhereAve.txt') as house:
+    print(house.read())
+```
+
+这同样可以打开 213AnywhereAve.txt 文件，将流绑定到 house，然后读取并输出文件中的
+代码行。无须手动调用 house.close()，因为 Python 在后台能自动执行这条语句。
 
 ## 11.4 文件模式
 
+open()函数可选地接收第二个参数 mode。该参数应为一个字符串，指示文件应该如何打开
+，且定义了可以对流对象执行什么操作，如读取、写入等。如果没有传递 mode 参数
+，Python 将使用 mode='r'，即以只读方式打开文件。
+
+基于文本的文件有 8 种不同的文件模式，每种模式的行为都略有不同。基本模式如下：
+
+- r: 打开文件进行读取
+- w：打开文件进行写入，但首先需要截断（擦除）文件原有内容
+- a：打开文件进行追加写入，即写入现有文件的末尾。
+- x：创建一个文件并打开它进行写入
+
+添加加号(+)标志能追加读取或写入，以模式中缺少的那个为准。其中最重要的用法是模式
+r+，它允许我们在不擦除文件原有内容的情况下读取或写入文件。
+
+| 功能           | r   | r+  | w   | w+  | a   | a+  | x   | x+  |
+| -------------- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 允许去读       | √   | √   |     | √   |     | √   |     | √   |
+| 允许写入       |     | √   | √   | √   | √   | √   | √   | √   |
+| 可创建新文件   |     |     | √   | √   | √   | √   | √   | √   |
+| 可打开现有文件 | √   | √   | √   | √   | √   | √   |     |     |
+| 先擦除文件内容 |     |     | √   | √   |     |     |     |     |
+| 允许搜索       | √   | √   | √   | √   |     | √\* | √   | √   |
+| 初始位置在开头 | √   | √   | √   | √   |     |     | √   | √   |
+| 初始位置在结尾 |     |     |     |     | √   | √   |     |     |
+
+√\*只允许读搜索
+
+在流中，位置指示在文件中读取和写入的位置。如果模式支持，seek()方法允许更改此位置
+。默认情况下，此位置在文件的开头或结尾。
+
+还可以使用 mode 参数在默认的文本模式(t)和二进制模式(b)之间切换。但是现在，我们至
+少要先明白使用哪种模式打开了文件。例如，mode='r+t'以读写文本模式打开文件，和
+mode='r+'等效；而 mode='r+b'以读写二进制模式打开文件。
+
+当使用读取模式(r 或 r+)打开文件时，文件必须已经存在。如果不存在，open()函数将引
+发 FileNotFoundError。
+
+创建模式(x 或 x+)恰恰相反，要求文件必须事先不存在。如果事先存在，open()函数将引
+发 FileExistError。
+
+写入模式(w 或 w+)和追加模式(a 或 a+)都没有这些问题。如果文件存在就打开，如果不存
+在就创建。如果尝试写入仅为读取而打开的流(r)或从仅为写入而打开的流(w、a 或是 x)中
+读取，则读取或写入操作将引发 io.UnsupportedOperation 错误。
+
+如果想要体检检查流支持哪些操作，请在流上使用 readable()、writeable()或 eekable()
+方法，如下所示：
+
+```py
+with open('213AnywhereAve.txt', 'r') as file:
+    print(file.readable())      # print 'True'
+    print(file.writable())      # print 'False'
+    print(file.seekable())      # print 'True'
+```
+
 ## 11.5 读取文件
+
+要从文件中读取，首先需要获得一个流，并以可读模式(r、r+、w+、a+或 x+)打开这个流。
+然后就可以通过如下 4 种方式之一进行查阅：read()、readline()、readlines()或迭代。
+
+先准备后续使用读取方法读取的文件 78SomewhereRd.txt：
+
+```txt
+78 Somewhere Road, Anytown PA
+Tiny 2-bed, 1-bath bungalow. Needs repairs.
+Built in 1981; original kitchen and appliances.
+Small backyard with old storage shed.
+Built on ancient burial ground.
+$431,998
+
+```
+
+### 11.5.1 read()方法
+
+可以使用 read()方法读取 78SomewhereRd.txt 文件:
+
+```py
+with open('78SomewhereRd.txt', 'r') as house:
+    contents = house.read()
+    print(type(contents))
+    print(contents)
+```
+
+默认情况下，read()将读取字符，直至到达文件末尾。可以使用 size 参数更改此行为，该
+参数用于指定读取的最大字符数。例如，要从文件中读取最多 20 个字符（如果先到达文件
+末尾，则读取的字符更少），如下所示：
+
+```py
+with open('78SomewhereRd.txt', 'r') as house:
+    print(repr(house.read(20)))
+```
+
+### 11.5.2 readline()方法
+
+readline()方法的行为和 read()基本相同，不同之处在于 readline()只读取到换行符，而
+不是读取到文件末尾。可以用这个方法来读取文件的前两行。和以前一样，使用 repr()显
+示原始字符串，如下所示：
+
+```py
+with open('78SomewhereRd.txt', 'r') as house:
+    line1 = house.readline()
+    line2 = house.readline()
+    print(repr(line1))  # '78 Somewhere Road, Anytown PA\n'
+    print(repr(line2))  # 'Tiny 2-bed, 1-bath bungalow. Needs repairs.\n'
+```
+
+house 流能记住在文件中的位置。因此，每次调用 readline()后，流的位置都被设置为下
+一行的开头。运行上述代码后系那个输出我呢间的前两行，将其作为原始字符串输出，就能
+看到换行符的字面量。
+
+readline()方法还有一个 size 参数，size 是“最多读取的字符数上限”，而不是“读取多少
+行”。
+
+```py
+with open('78SomewhereRd.txt', 'r') as house:
+    print(repr(house.readline(2)))  # '78'
+    print(repr(house.readline(2)))  # ' S'
+    print(repr(house.readline(100)))    # 'omewhere Road, Anytown PA\n'
+    print(repr(house.readline(2)))  # 'Ti'
+    print(repr(house.readline(2)))  # 'ny'
+    print(repr(house.readline()))   # ' 2-bed, 1-bath bungalow. Needs repairs.\n'
+```
+
+readline 会基础每次调用之后的位置，下次调用都基于上一次调用结束时的位置开始。
+
+核心规则：
+
+1. readling()始终按“行”读取
+2. size 只是一个字符数量的“软限制”
+3. 如果：
+   1. 先遇到换行符\n -> 整行返回
+   2. 先到达 size -> 返回“半行”
+4. 不会为了凑够 size 去读取下一行，例如，readline(n)，最多读取到 n 个字符，如果
+   遇到\n 提前结束。
+
+> 注意：readline(size)中的 size 不是指行数，而是字符上限，且不一定返回完整的一行
+> ，也可能返回半行。
+
+不同行为对照表：
+
+| 调用方式     | 行为说明                                              |
+| ------------ | ----------------------------------------------------- |
+| readline()   | 读取一整行（直到\n 或 EOF）                           |
+| readline(-1) | 等价于 readline()                                     |
+| readline(0)  | 直接返回空字符串 ''                                   |
+| readline(n)  | 最多读 n 个字符，当 n 大于*行长度*时，遇到\n 提前结束 |
+
+用途：
+
+1. 流式处理超大文件（精细控制内存）
+2. 网络流、管道、非规则文本
+3. 自定义分块行解析器
+
+```py
+buffer = ''
+while True:
+    part = f.readline(64)
+    if not part:
+        break
+    buffer += part
+    if buffer.endswith('\n'):
+        handle_line(buffer)
+        buffer = ''
+```
+
+### 11.5.3 readlines()方法
+
+可以使用 readlines()一次性将文件的所有行读取为字符串列表，如下所示：
+
+```py
+with open('78SomewhereRd.txt', 'r') as house:
+    lines = house.readlines()
+    for line in lines:
+        print(line.strip())
+```
+
+文件的每一行都单独存储在一个字符串中，所有字符串都存储在列表 lines 中。读取完所
+有行后，输出每一行，并对字符串对象使用 strip()方法已删除每个字符串末尾的换行符。
+这将删除所有前导或尾随空白字符，包括换行符。
+
+readlines()方法有一个 hint 参数，是指“期望读取的字符总数上限”，而不是“行数” 或“
+单行长度”，但是该值只是一个“参考值”，并非硬性限制。
+
+核心规则：
+
+1. 从当前位置开始，逐行读取
+2. 累计已读取的字符数 total_chars
+3. 一旦 total_chars >= hint
+   1. 至少保证当前行完整读取
+   2. 然后停止
+4. 返回已读取的所有行，永远不会返回半行
+
+不同行为对照表：
+
+| 调用方式       | 行为说明                                                        |
+| -------------- | --------------------------------------------------------------- |
+| readlines(0)   | 不读取任何内容，返回空列表 `[]`                                 |
+| readlines(-1)  | 当 hint 小于 0 时，等价于 readlines()，读取整个文件（直到 EOF） |
+| readline(hint) | 累计读取 hint 个字符之后遇到第一个换行就停止                    |
+
+使用场景：
+
+1. 流式“分批”读取大文件（仍按行）
+2. 与 `for line in f` 的关系
 
 ## 11.6 流位置
 
+流位置表示“下一次读取或写入将发生的位置”。它是文件对象内部维护的一个偏移量，而不
+是我们能直接看到的变量。
+
+流位置三个核心特性：
+
+1. 单一性：一个文件对象只有一个位置指针
+2. 前进性：默认情况下，只能进不能退，除非我们显示地调用了`seek()`
+3. 状态相关性：位置与打开模式(`r/w/a/x/+`)、文本/二进制模式、编码、缓冲策略强相
+   关
+
+### 11.6.1 tell()方法
+
+tell() 获取当前位置。如果是二进制模式，返回字节偏移量；如果是文本模式，返回 _不
+透明_ 的逻辑位置值，_返回不一定等于“字符数”_，因为 UTF-8 编码为多字节，换行符转
+换(`\n` ↔ `\r\n`)都会导致文本模式下 tell()的返回值不一定等于字符数。
+
+```py
+with open('213AnywhereAve.txt', 'r') as house:
+    print(repr(house.readline()))   # '78 Somewhere Road, Anytown PA\n'
+    print(house.tell()) # 31
+    print(repr(house.readline()))   # 'Cozy 2-bed, 1-bath bungalow. Full of potential.\n'
+    print(house.tell()) # 80
+```
+
+### 11.6.2 seek()方法
+
+seek()方法用于移动文件流的位置指针，返回新的位置值（与 `tell()` 一致）。其中
+seek()有两个参数，offset 和 whence。
+
+其中 offset 用于指定偏移量。单位取决于文件模式，如果在二进制模式下，单位为字节，
+如果在文本模式下，单位为逻辑位置值，不是字符数。
+
+whence 用于指定参考基准点。默认值为 0。表示以文件开头为偏移基准。
+
+| whence | 常量        | 含义         |
+| ------ | ----------- | ------------ |
+| 0      | os.SEEK_SET | 从文件开头算 |
+| 1      | os.SEEK_CUR | 从当前算     |
+| 2      | os.SEEK_END | 从文件末尾算 |
+
+其中 seek(0)常用于跳转到文件开头，seek(0, 2)用于跳转到文件结尾。
+
+例如，重复输出第一行：
+
+```py
+with open('78SomewhereRd.txt', 'r') as house:
+    for _ in range(3):
+        print(house.readline().strip())
+        house.seek(0)
+```
+
+输出如下：
+
+```shell
+78 Somewhere Road, Anytown PA
+78 Somewhere Road, Anytown PA
+78 Somewhere Road, Anytown PA
+```
+
+seek()方法也可以用来跳转到其他流位置，而不仅仅是开头或结尾。
+
+```py
+with open('78SomewhereRd.txt', 'r') as house:
+    for n in range(10):
+        house.seek(n)
+        print(house.readline().strip())
+```
+
 ## 11.7 写入文件
+
+关于写入流，首先要记住的是，我们总是在覆盖，而不是插入！在追加内容到一个文件末尾
+时，这并不重要，但是在其他情况下，这可能会导致混乱和不理想的结果。
+
+### 11.7.1 write()方法
+
+write()方法将给定的字符串从当前流位置开始写入文件，并返回一个整数来表示写入文件
+的字符数量。但是请记住，这将覆盖从流位置到新数据末尾的所有数据。为防止数据意外弄
+丢，一般先将文件读入内存，再修改内存中的文件数据，最后将它们写回同一文件。
+
+```py
+with open('78SomewhereRd.txt', 'r+') as real_estate_listing:
+    contents = real_estate_listing.read()
+```
+
+首先以读写模式打开文件。这里不通过流直接修改文件内容，而是想文件数据作为字符串读
+入内存，并绑定到 contents。然后通过处理这个字符串而不是流本身来修改描述：
+
+```py
+    contents.replace("Tiny", "Cozy")
+    contents.replace("Needs repaires", "Full of potential")
+    contents.replace("Small", "Compact")
+    contents.replace("old storage shed", "datached workshop")
+    contents.replace("Built on ancient burial ground.", "Unique atmosphere.")
+```
+
+以上代码使用 replace()字符串方法，将没有吸引力的单词和短语替换成了更有吸引力的单
+词和短语。
+
+一旦对字符串的新版本感到满意，就可以将其写回文件，如下所示：
+
+```py
+    real_estate_listing.seek(0)
+    real_estate_listing.write(contents)
+```
+
+首先定位到文件的开头，因为我们想要使用 real_estate_listing.seek(0)覆盖那里的所有
+内容。然后将新内容写入文件。任何碍眼的旧内容都将被覆盖。
+
+剩下的问题就是新内容比旧内容短，所以一些旧数据还留在文件末尾。完成写入后，流位置
+刚刚写入数据的末尾，可以利用这个位置清理旧数据的剩余部分，如下所示：
+
+```py
+    real_estate_listing.truncate()
+```
+
+默认情况下，truncate()方法将删除从当前流位置到文件末尾的所有内容，这是通过文件截
+断到给定的字节数来实现的，该字节数可以作为参数传递。如果没有传入明确的截断长度
+，truncate()将使用 tell()方法提供的值，该值对应当前流位置。
+
+一旦流离开 with 语句，流就会被刷新并关闭，以确保写入对文件的更改。
+
+### 11.7.2 writelines()方法
+
+readlines()将文件内容存储为字符串列表，writelines()则将字符串列表写入文件
+。writelines()不会在提供给它的列表中的每个字符串末尾插入换行符。write()和
+writelines()之间的唯一区别就是后者接收一个字符串列表而不是一个字符串，并且不返回
+任何内容。
+
+使用 writelines() 重写上面的示例：
+
+```py
+with open('78SomewhereRd.txt', 'r+') as real_estate_listing:
+    contents = []
+    for line in real_estate_listing:
+        line = line.replace("Tiny", "Cozy")
+        line = line.replace("Needs repairs", "Full of potential")
+        line = line.replace("Small", "Compact")
+        line = line.replace("old storage shed", "datached workshop")
+        line = line.replace("Built on ancient burial ground.", "Unique atmosphere.")
+        contents.append(line)
+
+    real_estate_listing.seek(0)
+    real_estate_listing.writelines(contents)
+    real_estate_listing.truncate()
+```
+
+因为换行符被 readlines()读入且保留在每行的末尾，所以这些换行符被原样写入。如果删
+除了它们，则不得不在调用 writelines()之前，再次手动将它们追加回去。
 
 ### 11.7.3 用 print() 写入文件
 
@@ -431,4 +1028,180 @@ from pathlib import PurePath
 path = PurePath('../index.md')
 with open(path, 'r', encoding='utf-8') as file:
     print(file.read())
+
+# AttributeError: 'PureWindowsPath' object has no attribute 'touch'
+path.touch()
 ```
+
+可以将 PurePath 对象传递给 open()函数以打开../index.md。但是，无法通过路径对象本
+身对文件系统进行交互。如果尝试使用 path.touch()进行操作，就会失败。
+
+如果只打算在对 open()的调用中使用路径，或者不打算通过路径对象的方法直接和系统交
+互，那么应该使用纯路径，这可以防止意外修改文件系统。
+
+#### 具体路径
+
+具体路径提供了和文件系统交互的方法。从 Path 类实例化对象将创建一个 PoxisPath 或
+WindowsPath 对象，如下所示：
+
+```py
+from pathlib import Path
+
+path = Path('../index.md')
+with open(path, 'r', encoding="utf-8") as file:
+    print(file.read())
+
+# 当文件不存在时创建一个空文件
+path.touch()
+```
+
+上面两个示例几乎相同，只是一个是 PurePath 对象一个是 Path 对象。因此仍然可以打开
+路径，但是也可以使用 Path 对象上的方法直接和文件系统交互。例如，如果 index.md 不
+存在，则可以通过 path.touch() 创建一个空文件。
+
+如果我们明确地要将自己的实现耦合到一个特定的操作系统，请使用路径类的 Windows 或
+Posix 形式；否则，使用 PurePath 或 Path。
+
+### 11.9.2 路径组成
+
+类路径对象由路径根据操作系统在后台连接为一体的部分组成。路径的写法有两种——相对路
+径和绝对路径，它们都适用于所有 PurePath 和 Path 对象。
+
+绝对路径是从文件系统的根目录开始的路径。文件的绝对路径始终以锚点开头并以一个名称
+（完备文件名）结尾。这个名称由第一个非前导点之前的词干和通常位于该点之后的一个或
+多个扩展名组成。如下所示：
+
+```shell
+/path/to/file.txt
+```
+
+此处的锚点是前导斜线(/)。文件名为 file.txt，词干为 file，扩展名为 .txt。
+
+可以从类路径对象中检索这些部分。比如使用 PurePath.parts()方法，该方法返回一个部
+件元组。或者将特定组件作为特性来访问。
+
+如下所示为一个输出传递进来的路径的每个部分的函数。后文将使用该函数分别剖析
+Windows 路径和 POSIX 路径。
+
+```py
+import pathlib
+
+def path_parts(path):
+    print(f"{path}\n")
+
+    print(f"Drive: {path.drive}")
+    print(f"Root: {path.root}")
+    print(f"Anchor: {path.anchor}\n")
+
+    print(f"Parent: {path.parent}\n")
+    for index, parent in enumerate(path.parents):
+        print(f"Parents [{index}]: {parent}")
+
+    print(f"Name: {path.name}")
+    print(f"Suffix: {path.suffix}")
+    for i, suffix in enumerate(path.suffixes):
+        print(f"Suffixes [{i}]: {suffix}")
+    print(f"Stem: {path.stem}\n")
+
+    print("------------------------\n")
+```
+
+#### Windows 路径组成
+
+```py
+path_parts(pathlib.PureWindowsPath('F:/my-python-journey/programing/dead-simple-python/chapter-11/index.md'))
+```
+
+输出如下：
+
+```shell
+F:\my-python-journey\programing\dead-simple-python\chapter-11\index.md
+
+Drive: F:
+Root: \
+Anchor: F:\
+
+
+Parents [0]: F:\my-python-journey\programing\dead-simple-python\chapter-11
+Parents [1]: F:\my-python-journey\programing\dead-simple-python
+Parents [2]: F:\my-python-journey\programing
+Parents [3]: F:\my-python-journey
+Parents [4]: F:\
+Name: index.md
+Suffix: .md
+Suffixes [0]: .md
+Stem: index
+
+------------------------
+
+```
+
+#### POSIX 路径组成
+
+```py
+path_parts(pathlib.PurePosixPath('/usr/lib/x86_64-linux-gnu/libpython3.7m.so.1'))
+```
+
+输出如下所示：
+
+```shell
+/usr/lib/x86_64-linux-gnu/libpython3.7m.so.1
+
+Drive:
+Root: /
+Anchor: /
+
+Parent: /usr/lib/x86_64-linux-gnu
+
+Parents [0]: /usr/lib/x86_64-linux-gnu
+Parents [1]: /usr/lib
+Parents [2]: /usr
+Parents [3]: /
+Name: libpython3.7m.so.1
+Suffix: .1
+Suffixes [0]: .7m
+Suffixes [1]: .so
+Suffixes [2]: .1
+Stem: libpython3.7m.so
+
+------------------------
+
+```
+
+这一示例演示了我们可能遇到的和文件扩展名相关的独特问题。虽然存在包含多个后缀的有
+效扩展名，例如 .tar.gz（经由 GZ 压缩的 tarball），但是并非每个后缀都是文件扩展名
+的一部分。例如，预期的文件名是 libpython3.7m，但是 pathlib 错误地将.7m 解析为后
+缀之一，毕竟它包含前导点。同时，由于预期的文件扩展名(.so.1)实际上由两个后缀组成
+，因此词干又错误地检测为 libpython3.7m.so，而后缀仅被检测为.1。在路径中查找文件
+扩展名时，需要牢记一点。目前没有简单或明显的方式能够解决这个问题，必须根据代码的
+需要逐一处理。简而言之，不要过分依赖 pathlib 对词干和后缀的辨别能力，它很可能以
+非常恼人的方式让我们失望。
+
+### 11.9.3 创建路径
+
+可以通过将路径作为字符串传递给需要的类初始化器来定义路径。然后就可以将路径和
+open()或任何其他文件操作函数一起使用了。例如，在 UNIX 系统中，可以使用如下所示的
+代码访问 bash 历史记录。
+
+```py
+from pathlib import PosixPath
+
+path = PosixPath('/home/jason/.bash_history')
+```
+
+在初始化类路径对象并将其绑定到 path 后，可以执行打开操作。有两种方法可以做到这一
+点：将其传递给 open()，或者对 Path 对象使用 open()方法（不可用于 PurePath 对象）
+。这里使用后者，如下所示：
+
+```py
+with path.open('r') as file:
+    for line in file:
+        continue
+    print(line.strip())
+```
+
+在此示例中，尽管只需要文件的最后一行，也仍然遍历整个文件。循环结束时，名称 line
+将绑定到读取的最后一行的字符串内容。除此之外，再没有更简单的方法从文件末尾进行读
+取。
+
+最后，输出这一行，并使用 strip() 方法清除尾部的换行符。
