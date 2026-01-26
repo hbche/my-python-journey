@@ -84,8 +84,26 @@ find_all(tag, attributes, recursive, string, limit, keywords)
 
 ```py
 bs.find_all(id="text")
-bs.find_all("", {"id": "text"})
+bs.find_all(attrs={"id": "text"})
 ```
 
 另外，用 keyword 偶尔会出现问题，尤其是在用 class 属性查找标签的时候，因为 class
-是 Python 中受保护的关键字。
+是 Python 中受保护的关键字。也就是说，class 是 Python 语言的保留字，在 Python 程
+序里是不能当作变量或参数名使用的。我们运行如下程序会报错：
+
+```py
+bs.find_all(class="green")
+```
+
+不过，我们可以用 BeautifulSoup 提供的有点臃肿的方案，在 class 后面增加一个下划线
+：
+
+```py
+bs.find_all(class_="green")
+```
+
+另外，也可以用属性参数把 class 用引号抱起来：
+
+```py
+bs.find_all(attrs={'class': 'green'})
+```
