@@ -487,6 +487,77 @@ plt.show()
 
 #### 1.2.4.1 颜色与样式：视觉传达的科学
 
+```py
+# 颜色与样式：视觉传达的科学
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(0, 10, 200)
+
+plt.rcParams['font.sans-serif'] = ['Microsoft YaHei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 创建图形和坐标轴
+fig = plt.figure(figsize=(10, 6))
+ax = fig.add_subplot(111)   # 1行1列，第一个
+
+# 使用不同的线型和颜色
+line_styles = ['-', '--', '-.', ':']
+colors = ['#FF6B6B', '#4ECDC4', '#FFD166', '#06D6A0']
+
+for i in range(4):
+    y = np.sin(x + i * 0.5)
+    ax.plot(x, y,
+            linewidth=2,
+            linestyle=line_styles[i],
+            color=colors[i],
+            marker='o' if i ==0 else None,  # 只在第一条线加标记
+            markersize=4,
+            markevery=20,
+            label=f'曲线{i+ 1}'
+            )
+
+# 专业级的图表修饰
+ax.set_title('专业图表设计示例',
+             fontsize=16,
+             fontweight='bold',
+             pad=20,    # 标题与图表的间距
+            )
+
+ax.set_xlabel('时间（秒）', fontsize=12)
+ax.set_ylabel('振幅', fontsize=12)
+
+# 设置坐标轴范围
+ax.set_xlim(0, 10)
+ax.set_ylim(-1.5, 1.5)
+
+# 设置网格
+ax.grid(True, which='both', linestyle='--', alpha=0.3)
+
+# 添加图例
+ax.legend(loc='upper right', fontsize=10, framealpha=0.9)
+
+# 设置坐标轴刻度
+ax.text(2, 1.2, '峰值区域',
+        fontsize=10,
+        bbox=dict(boxstyle='round,pad=0.3',
+                  facecolor='yellow',
+                  alpha=0.3
+                  )
+        )
+
+# 添加箭头标识
+ax.annotate('最小值点',
+            xy=(4.7, -1),
+            xytext=(6, -1.2),
+            arrowprops=dict(arrowstyle='->', connectionstyle='arc3'),
+            fontsize=10
+            )
+
+plt.tight_layout()
+plt.show()
+```
+
 #### 1.2.4.2 多子图与布局管理
 
 ### 1.2.5 实战项目
@@ -494,7 +565,61 @@ plt.show()
 #### 1.2.5.1 绘制直角坐标系
 
 ```py
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 
+fig, axes = plt.subplots()
+
+# 设置坐标轴的范围
+axes.set_xlim(-6, 7)
+axes.set_ylim(-5, 6)
+
+# 设置 水平和垂直 坐标轴
+axes.axhline(y=0, color='black', linewidth=0.8)
+axes.axvline(x=0, color='black', linewidth=0.8)
+
+# # 将 x轴 y轴 主刻度器定位器设置为间隔1.0
+axes.xaxis.set_major_locator(MultipleLocator(1.0))
+axes.yaxis.set_major_locator(MultipleLocator(1.0))
+# # 开启网格线，默认与主刻度对齐
+axes.grid(True, which='major', linestyle='--', linewidth=0.8, color='lightgray')
+
+# 绘制原点
+plt.scatter([0], [0], marker='x', color='black')
+
+# 绘制散点
+points = [
+    (5, 1),
+    (6, 4),
+    (3, 1),
+    (1, 2),
+    (-1, 5),
+    (-2, 5),
+    (-3, 4),
+    (-4, 4),
+    (-5, 3),
+    (-5, 2),
+    (-2, 2),
+    (-5, 1),
+    (-4, 0),
+    (-2, 1),
+    (-1, 0),
+    (0, -3),
+    (-1, -4),
+    (1, -4),
+    (2, -3),
+    (2, -3),
+    (1, -2),
+    (3, -1),
+    (5, 1),
+]
+# 绘制连线
+plt.plot([x for (x, _) in points], [y for (_, y) in points])
+# 绘制端点
+plt.scatter([x for (x, _) in points], [y for (_, y) in points], marker='o', color='black')
+
+plt.tight_layout()
+plt.show()
 ```
 
 ### 1.2.6 实用小技巧
