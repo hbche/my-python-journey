@@ -264,7 +264,7 @@ draw3d(
 
 将三维向量乘以标量，就是将其所有分量乘以标量系数。
 
-用 Python 绘制 `(1, 2, 3) x 2` 的结果：
+用 Python 绘制 `(1, 2, 3) * 2` 的结果：
 
 ```py
 def scale(scale, vector):
@@ -357,19 +357,19 @@ def length(vector):
 
 点击（也叫内积）是对两个向量的运算，返回一个标量。
 
-指向相似方向的两个向量的点积为正，并且向量越大，乘机越大。相反，如果两个向量指向
+指向相似方向的两个向量的点积为正，并且向量越大，点积越大。相反，如果两个向量指向
 相反的方向，则其点积为负。向量越长，点积越小。如果两个向量的方向完全垂直，那么无
 论他们的长度如何，点积都是零。
 
 ### 3.3.2 计算点积
 
-给定两个向量的坐标，有一个计算点积的简单工时：将响应的坐标相乘，然后将乘积相加。
+给定两个向量的坐标，有一个计算点积的简单工时：将相应的坐标相乘，然后将乘积相加。
 
 假设现在给定两个向量 $v = (x_v, y_v, z_v)$ 和 $w = (x_w, y_w, z_w)$，则他们的点
 积计算公式如下：
 
 $$
-v\cdot{w} = x_v *x_w + y_v*y_w + z_v*z_w
+v\cdot{w} = x_v \times{x_w} + y_v\times{y_w} + z_v\times{z_w}
 $$
 
 Python 实现如下：
@@ -387,19 +387,19 @@ def dot(v1, v2):
 我们已经知道，点击是根据两个向量的夹角而变化的。其实点积还有另一个公式。
 
 $$
-v\cdot{w} = |v|*|w|*cos(θ)
+v\cdot{w} = |v|\times{|w|}\times{cos(θ)}
 $$
 
 因此我们可以依据点积的两种计算公式计算两个向量的夹角：
 
 $$
-cos(θ) = \frac{v\cdot{w}} {|v|*|w|}
+cos(θ) = \frac{v\cdot{w}} {|v|\times{|w|}}
 $$
 
 利用反三角函数推理出 θ 的值：
 
 $$
-θ = arccos(\frac{v\cdot{w}} {|v|*|w|})
+θ = arccos(\frac{v\cdot{w}} {|v|\times{|w|}})
 $$
 
 计算两个向量间夹角的 Python 实现如下：
@@ -419,3 +419,165 @@ def between_angle(v1, v2):
 
 向量积遵循右手规则。向量积 $u \times{v}$ 向量的方向：右手食指指向 u 的方向，将三
 指弯向 v 的方向，拇指指向的就是 $u \times{v}$ 的方向。
+
+### 3.4.3 求向量的长度
+
+和点积一样，向量积的长度也是一个数，它提供了关于输入向量的相对位置的信息。
+
+两个向量的向量积对应的向量的长度是两个向量构成的平行四边形的面积。
+
+$
+|u \times{v}| = |u| \times{|v|} \times{sin(θ)}
+$
+
+### 3.4.4 计算三维向量的向量积
+
+u = $(u_x, u_y, u_z)$
+
+v = $(v_x, v_y, v_z)$
+
+向量积的公式如下：
+
+$$
+u \times{v} = (u_y \times{v_z}-u_z\times{v_y}, u_z\times{v_x} - u_x\times{v_z, u_x\times{v_y}}-u_y\times{v_x})
+$$
+
+使用 Python 代码实现如下：
+
+```py
+def cross(u, v):
+    ux, uy, uz = u
+    vx, vy, vz = v
+    return (uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx)
+```
+
+### 3.4.5 练习
+
+## 3.5 在二维平面上渲染三维对象
+
+### 3.5.1 使用向量定义三维对象
+
+使用向量表示三维对象：
+
+```py
+# 正8面体的向量表示，每个二维数组代表一个面
+octahedron = [
+    [(1,0,0), (0,1,0), (0,0,1)],
+    [(1,0,0), (0,0,-1), (0,1,0)],
+    [(1,0,0), (0,0,1), (0,-1,0)],
+    [(1,0,0), (0,-1,0), (0,0,-1)],
+    [(-1,0,0), (0,0,1), (0,1,0)],
+    [(-1,0,0), (0,1,0), (0,0,-1)],
+    [(-1,0,0), (0,-1,0), (0,0,1)],
+    [(-1,0,0), (0,0,-1), (0,-1,0)],
+]
+
+# 获取端点
+def vertices(faces):
+    return list(set([vertex for face in faces for vertex in face]))
+```
+
+### 3.5.2 二维投影
+
+要把三维点变成二维点，必须选择我们的三维观察方向。一旦从我们的视角确定了定义“上”
+和“右”的两个三维向量，就可以将任意三维向量投射到它们上面，得到两个分量，而不是三
+个分量。以下函数利用点积提取三维向量在给定方向上的分量。
+
+```py
+def component(v, direction):
+    return dot(v, direction) / length(direction)
+```
+
+通过对两个方向硬编码，我们可以建立一种从三个坐标向下投影到两个坐标的方法。这个函
+数接收一个三维向量或三个数组组成的元组，并返回一个二维向量或两个数组组成的元组。
+
+```py
+def vector_to_2d(v):
+    return (component(v, (1, 0, 0)), component(v, (0, 1, 0)))
+```
+
+例如三维向量 (1, 1, 1) 对应的二维投影为：
+
+```py
+vector_to_2d((1, 1, 1)) # (1.0, 1.0)
+```
+
+依次类推，我们可以将三角形从三维转换为二维，我们只需要将这个投影函数应用到表示三
+角形面的所有定点向量上。
+
+```py
+def face_to_2d(face):
+    return [vector_to_2d(vector) for vector in face]
+```
+
+### 3.5.3 确定面的朝向和阴影
+
+为了给二维绘图着色，我们根据每个三角形面对给定光源的角度大小，为其选择一个固定的
+颜色。假设光源在基于原点坐标(1, 2, 3)处，那么三角形面的亮度取决于它余光线的垂直
+度。另一种测量方法是借助垂直于面的向量与光源的对齐程度。我们不必担心颜色的计算
+，matplotlib 有一个内置的库来做这些工作。例如：
+
+```py
+blues = matplotlib.colormaps['Blues']
+```
+
+提供了一个叫 blues 函数，它将从 0 到 1 的数映射到由暗到亮的蓝色光谱上。我们的任
+务是找出一个 0 到 1 之间的数，表示一个面的明亮程度。
+
+给定一个垂直于每个面的向量（法线）和一个指向光源的向量，它们的点积就说明了其对齐
+程度。此外，由于我们只考虑方向，可以选择长度为 1 的向量。那么，如果该面完全朝向
+光源，点积介于 0 和 1 之间。如果它与光源的角度超过 90°，将完全不被照亮。这个辅助
+函数接收一个向量，并返回另一个相同方向但长度为 1 的向量。
+
+```py
+def unit(v):
+    return scale(1/length(v), v)
+```
+
+第二个辅助函数接收一个面，并返回一个垂直于它的向量。
+
+```py
+def normal(face):
+    return cross(subtract(face[1], face[0], subtract(face[2], face[0])))
+```
+
+把他们结合起来，就得到了一个绘制三角形的函数。它调用 draw2d 函数来渲染三维模型。
+
+```py
+# 将3D推向渲染在2D平面上的渲染函数
+
+import matplotlib
+from vector_tools import unit, normal, dot, face_to_2d
+from draw2d import Polygon2D, draw2d
+
+blues = matplotlib.colormaps['Blues']
+
+def render(faces, light=(1, 2, 3), color_map=blues, lines=None):
+    # 储存转换之后的多边形
+    polygons = []
+
+    for face in faces:
+        # 获取每个面的法线向量
+        unit_normal = unit(normal(face))
+
+        # 由于假设视角是在Z轴正半轴处，所有面的朝向如果偏向Z轴负半轴，那么将不可见
+        if unit_normal[2] > 0:
+            # 法线与光源的点积越大，阴影越小
+            c = color_map(1 - dot(unit_normal, unit(light)))
+            # 为每一个三角形的边指定一个可选的lines参数，显示正在绘制的形状骨架
+            p = Polygon2D(*face_to_2d(face), fill=c, color=lines)
+            polygons.append(p)
+
+
+    draw2d(*polygons, axes=False, origin=False, grid=None)
+```
+
+下面基于之前定义的 8 面体的数据和渲染函数对 8 面体进行渲染：
+
+```py
+render(octahedron, color_map=matplotlib.colormaps['Blues'], line=black)
+```
+
+### 3.5.4 联系
+
+## 3.6 小结

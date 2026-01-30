@@ -1,6 +1,6 @@
 from draw3d import *
 import math
-from vector_tools import add, length, dot, between_angle
+from vector_tools import add, length, dot, between_angle, cross, vector_to_2d
 
 # draw3d()
 
@@ -119,7 +119,49 @@ from vector_tools import add, length, dot, between_angle
 # )
 # print(dot(v1, v2))
 
-# 3.3.4 计算向量的夹角
-v1 = (1, 1, 0)
-v2 = (1, -1, 0)
-print(between_angle(v1, v2))
+# # 3.3.4 计算向量的夹角
+# v1 = (1, 1, 0)
+# v2 = (1, -1, 0)
+# print(between_angle(v1, v2))
+
+# # 3.4.4 计算向量积
+# v1 = (1, 0, 1)
+# v2 = (-1, 0, 0)
+# print(cross(v1, v2))
+
+# # 3.5.1 绘制三维对象
+# draw3d(
+#     Segment3D((-1, 0, 0), (1, 0, 0)),
+#     Segment3D((0, -1, 0), (0, 1, 0)),
+#     Segment3D((0, 0, -1), (0, 0, 1)),
+#     Points3D(*[
+#         (1, 0, 0),
+#         (-1, 0, 0),
+#         (0, 1, 0),
+#         (0, -1, 0),
+#         (0, 0, 1),
+#         (0, 0, -1)
+#     ]),
+#     Arrow3D((1, 0, 0), (0, 0, 1)),
+#     Arrow3D((0, 1, 0), (0, 0, 1)),
+#     Arrow3D((-1, 0, 0), (0, 0, 1)),
+#     Arrow3D((0, -1, 0), (0, 0, 1)),
+# )
+
+# 正8面体的向量表示
+octahedron = [
+    [(1,0,0), (0,1,0), (0,0,1)],
+    [(1,0,0), (0,0,-1), (0,1,0)],
+    [(1,0,0), (0,0,1), (0,-1,0)],
+    [(1,0,0), (0,-1,0), (0,0,-1)],
+    [(-1,0,0), (0,0,1), (0,1,0)],
+    [(-1,0,0), (0,1,0), (0,0,-1)],
+    [(-1,0,0), (0,-1,0), (0,0,1)],
+    [(-1,0,0), (0,0,-1), (0,-1,0)],
+]
+
+# 获取端点
+def vertices(faces):
+    return list(set([vertex for face in faces for vertex in face]))
+
+print(vector_to_2d((1, 1, 1)))
