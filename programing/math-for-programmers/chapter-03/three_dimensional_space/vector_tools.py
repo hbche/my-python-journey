@@ -1,4 +1,4 @@
-from math import sqrt, acos, pi
+from math import sqrt, acos, pi,atan, sin, cos
 
 def add(*vectors: tuple):
     """
@@ -105,3 +105,79 @@ def normal(face):
     normal: 获取面的法线
     """
     return cross(subtract(face[1], face[0]), subtract(face[2], face[0]))
+
+def to_polar(v):
+    """
+    将二维笛卡尔坐标转换成极坐标
+    """
+    return (length(v), atan(v[1] / v[0]))
+
+def to_orthogonal(v):
+    """
+    将极坐标转换为二维笛卡尔坐标
+    """
+    l, angle = v
+    return (round(l * cos(angle)), round(l * sin(angle)))
+
+def rotate(v, rotate_angle):
+    """
+    将二维向量旋转指定弧度
+    """
+    l, angle = to_polar(v)
+    return to_orthogonal((l, angle + rotate_angle))
+
+def rotate_x_by(angle):
+    """
+    将三维向量围绕 X 轴逆时针旋转指定弧度
+    """
+    def new_function(v):
+        vx, vy, vz = v
+        return (vx, *rotate((vy, vz), angle))
+    
+    return new_function
+
+def rotate_y_by(angle):
+    """
+    将三维向量围绕 Y 轴逆时针旋转指定弧度
+    """
+    def new_function(v):
+        vx, vy, vz = v
+        rotate_x, rotate_z = rotate((vx, vz), angle)
+        return (rotate_x, vy, rotate_z)
+    
+    return new_function
+
+
+def rotate_z_by(angle):
+    """
+    将三维坐标围绕 Z 轴逆时针旋转指定弧度
+    """
+    def new_function(v):
+        vx, vy, vz = v
+        return (*rotate((vx, vy), angle), vz)
+    
+    return new_function
+
+
+def compose(*args):
+    """
+    函数组合
+    """
+    def new_function(input):
+        state = input
+        for f in reversed(args):
+            state = f(state)
+        return state
+    return new_function
+
+v = (1, 2, 3)
+transform_1 = compose(rotate_z_by(pi/2), rotate_x_by(pi/2))
+transform_2 = compose(rotate_x_by(pi/2), rotate_z_by(pi/2))
+print(transform_1(v))   # (3, 1, 2)
+print(f"Original vector: {v}")
+# 绕Y轴顺时针旋转pi/2
+print(compose(rotate_y_by(-pi/2))(v))   # (3, 2, -1)
+print(transform_2(v))   # (-2, -3, 1)
+print(f"Original vector: {v}")
+# 绕Y轴逆时针旋转pi/2
+print(compose(rotate_y_by(pi/2))(v))    # (-3, 2, 1)
