@@ -289,13 +289,11 @@ x \cdot
   1 \\
 \end{pmatrix}
 + y \cdot
-
 \begin{pmatrix}
   -1 \\
   2 \\
 \end{pmatrix}
 =
-
 \begin{pmatrix}
   8 \\
   0 \\
@@ -821,8 +819,6 @@ $$
     -7
 \end{pmatrix}
 $$
-
-x-y=1 -y-z=3 x+z=-2 x+2z=-7 x=3 y=2 z=-5
 
 求得 x=3 ，y=2，z=-5。即表示坐标(1, 3, -7)用基向量(1, 0, 1)、(-1, -1, 0)和(0,
 -1, 2)表示的结果是(3, 2, -5)。
