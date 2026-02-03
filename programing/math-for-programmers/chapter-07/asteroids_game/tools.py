@@ -42,9 +42,7 @@ def intersection(u1, u2, v1, v2):
     """
     
     a1, b1, c1 = standard_form(u1, u2)
-    print(f"{a1}x + {b1}y = {c1}")
     a2, b2, c2 = standard_form(v1, v2)
-    print(f"{a2}x + {b2}y = {c2}")
     matrix = np.array(((a1, b1), (a2, b2)))
     out = np.array((c1, c2))
     return np.linalg.solve(matrix, out)
@@ -54,13 +52,13 @@ def do_segments_intersect(s1, s2):
     """
     判断两条线段s1和s2的交点是否在线段上
     """
+    
     distance1 = distance(*s1)
     distance2 = distance(*s2)
     
     try:
         # 计算交点坐标
         intersection_point = intersection(*s1, *s2)
-        print(f"intersection point is {intersection_point}")
         
         u1, u2 = s1
         v1, v2 = s2
@@ -70,12 +68,27 @@ def do_segments_intersect(s1, s2):
                 and distance(intersection_point, v1) <= distance2 \
                     and distance(intersection_point, v2) <= distance2
                     
-    except np.linalg.linalg.LinAlgError:
+    except np.linalg.LinAlgError:
         # 如果发生异常，就表示平行了，返回false
         return False
     
-# 4x+2y=8
-# 2x + y = 6
-matrix = np.array(((2, 1), (4, 2)))
-output = np.array((8, 6))
-np.linalg.solve(matrix, output)
+def get_three_vector_intersection(matrix, output):
+    """
+    get_three_vector_intersection: 获取三维平面的交点
+    
+    :param matrix: 三维平面对应的列分量矩阵
+    :param output: 输出结果对应的列矩阵
+    """
+    try:
+        return np.linalg.solve(np.array(matrix), np.array(output))
+    except np.linalg.LinAlgError:
+        # 如果发生异常，就表示平行了，返回false
+        return False
+    
+matrix = (
+    (1, 1, -1),
+    (0, 2, -1),
+    (1, 0, 1)
+)
+output = (-1, 3, 2)
+print(get_three_vector_intersection(matrix, output))

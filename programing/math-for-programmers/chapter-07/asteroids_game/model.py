@@ -1,6 +1,7 @@
 from random import randint, uniform
 from math import pi, sqrt, cos, sin
 from vector import to_cartesian, rotate2d, add
+from tools import do_segments_intersect
 
 # 代表小行星或宇宙飞船的基础模型
 class PolygonModel():
@@ -31,8 +32,29 @@ class PolygonModel():
         dx, dy = self.vx * milliseconds / 1000.0, self.vy * milliseconds / 1000.0
         self.x, self.y = add((self.x, self.y), (dx, dy))
         self.rotation_angle += self.rotation_angle * milliseconds / 1000.0
+        
+    def segments(self):
+        # 获取多边形的边
+        point_count = len(self.points)
+        points = self.transformed()
+        return [
+            (points[i], points[(i+1)%point_count])
+            for i in range(0, point_count)
+        ]
     
-    # def does_intersect(self):
+    def does_intersect(self, other_segment):
+        # 检查两条线段是否存在相交
+        for segment in self.segments():
+            if do_segments_intersect(other_segment, segment):
+                return True
+        return False
+    
+    def does_collide(self, other_poly):
+        # 检查两个多边形是否存在相交的边，从而检测是否存在碰撞
+        for other_segment in other_poly.segments():
+            if self.does_intersect(other_segment):
+                return True
+        return False
         
 
 class Ship(PolygonModel):

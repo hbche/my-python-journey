@@ -29,7 +29,7 @@ def add(v1, v2):
     """
     计算坐标相加
     """
-    return (sum(coordinates) for coordinates in zip(v1, v2))
+    return tuple(sum(coordinates) for coordinates in zip(v1, v2))
 
 def distance(p1, p2):
     """

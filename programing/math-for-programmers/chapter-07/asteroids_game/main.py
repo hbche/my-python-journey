@@ -58,7 +58,7 @@ def main():
     done = False
     clock = pygame.time.Clock()
     
-    # 
+    # P按键是否被按下，用于存储当前游戏截图
     # p_pressed = False
     
     while not done:
@@ -77,11 +77,11 @@ def main():
         for ast in asteroids:
             ast.move(milliseconds)
             
-        # if keys[pygame.K_LEFT]:
-        #     ship.rotation_angle += milliseconds * (2*pi/1000)
+        if keys[pygame.K_LEFT]:
+            ship.rotation_angle += milliseconds * (2*pi/1000)
             
-        # if keys[pygame.K_RIGHT]:
-        #     ship.rotation_angle -= milliseconds * (2*pi/1000)
+        if keys[pygame.K_RIGHT]:
+            ship.rotation_angle -= milliseconds * (2*pi/1000)
             
         # 获取飞船的激光坐标
         laser = ship.laser_segment()
@@ -92,17 +92,22 @@ def main():
         #     pygame.image.save(screen, f'figures/asteroid_screenshot_{milliseconds}.png')
         #     p_pressed = False
             
+        # 绘制屏幕
         screen.fill(WHITE)
         
+        # 监听空格绘制激光射线
         if keys[pygame.K_SPACE]:
             draw_segment(screen, *laser)
             
+        # 绘制飞船
         draw_poly(screen, ship)
         
+        # 绘制小行星
         for asteroid in asteroids:
-            # if keys[pygame.K_SPACE]:
-            #     asteroids.remove(asteroid)
-            # else:
+            # 如果小行星被激光击中则从屏幕上移除
+            if keys[pygame.K_SPACE] and asteroid.does_intersect(laser):
+                asteroids.remove(asteroid)
+            else:
                 draw_poly(screen, asteroid, color=GREEN)
                 
         pygame.display.flip()

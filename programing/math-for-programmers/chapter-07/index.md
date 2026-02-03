@@ -519,3 +519,459 @@ def standard_form(p1, p2):
     c = x1 * y2 - y1 * x2
     return (a, b, c)
 ```
+
+练习 7.12：对于 do_segments_intersect 中的四项距离检查中的每一项，找到一对线段，
+它们未通过其中一项，但通过了其他三项检查。
+
+解：为了更方便实验，我们修改原有实现，改为返回四个距离检测结果：
+
+```py
+def segment_checks(s1, s2):
+    u1, u2 = s1
+    v1, v2 = s2
+    l1, l2 = distance(*s1), distance(*s2)
+    x, y = intersection(u1, u2, s1, s2)
+    return [
+        distance(u1, (x, y)) <= l1,
+        distance(u2, (x, y)) <= l1,
+        distance(v1, (x, y)) <= l2,
+        distance(v2, (x, y)) <= l2,
+    ]
+```
+
+练习 7.14：实现 does_collide(other_polygon)方法，通过检查定义两个多边形的任何线
+段是否相交来确定当前 PolygonModel 对象是否与 other_polygon 发生碰撞。这可以帮助
+我们确定小行星是撞击了飞船还是撞击了另一颗小行星。
+
+```py
+class PolygonModel:
+    ...
+    def segments(self):
+        # 获取多边形的边
+        point_count = len(self.points)
+        points = self.transformed()
+        return [
+            (points[i], points[(i+1)%point_count])
+            for i in range(0, point_count)
+        ]
+
+    def does_intersect(self, other_segment):
+        # 检查两条线段是否存在相交
+        for segment in self.segments():
+            if do_segments_intersect(other_segment, segment):
+                return True
+        return False
+
+    def does_collide(self, other_poly):
+        # 检查两个多边形是否存在相交的边，从而检测是否存在碰撞
+        for other_segment in other_poly.segments():
+            if self.does_intersect(other_segment):
+                return True
+        return False
+```
+
+## 7.3 将线性方程泛化到更高维度
+
+### 7.3.1 在三维空间中表示平面
+
+对于二维空间里的任意点和任意非零向量，存在唯一一条直线垂直于该向量且经过该点。
+
+给定点$(x_0, y_0)$和向量$(a, b)$，那么通过 $(x_0, y_0)$存在一条直线，使得：对于
+直线上任意一点$(x, y)$，$(x-x_0, y-y_0)$与直线平行，与$(a, b)$垂直。
+
+再结合向量点积运算，我们可以推导出如下公式：
+
+$$
+(a, b)\cdot(x-x_0, y-y_0)=0
+$$
+
+将其转换成标准方程式：
+
+$$
+ax - by = ax_0 + by_0
+$$
+
+方程式右边是一个常数，所以可以改名为 c，得到直线的一般形式方程：$ax + by = c$
+
+泛化到三维空间：给定三维空间中的一个点和一个向量，存在一个与向量垂直并通过该点的
+唯一**平面**。如果向量是 $(a,b,c)$，点是$(x_0, y_0, z_0)$，可以得出：如果向
+量$(x, y, z)$位于平面内，那么 $(x-x_0, y-y_0, z-z_0)$垂直于$(a, b, c)$。
+
+$$
+(a, b, c)\cdot(x - x_0, y - y_0, z - z_0) = 0
+$$
+
+将其转换成标准方程式：
+
+$$
+ax + by + cz = ax_0 + by_0 + cz_0
+$$
+
+方程的右边是一个常数，可以得出，三维空间中的每个平面都有一个形式为
+$ax + by +cz = c$的方程。三维空间中的计算问题是求平面相交的位置，或求同事满足多
+个线性方程的$(x, y, z)$值。
+
+### 7.3.2 在三维空间职工求解线性方程组
+
+平面上的一对非平行线相较于唯一的点。对于平面来说是否也如此呢？画出一对相交的平面
+，非平行平面有可能在许多点相交。平面相交于一条直线，有两个非平行平面相交的无限多
+个点组成。
+
+如果添加与该相交直线不平行的第三个平面，则可以找到唯一的**交点**。
+
+为了找到这个交点，需要找到同时满足三个线性方程的 x、y 和 z 的值。
+
+$$
+a_1x + b_1y + c_1z = d_1\\
+a_2x + b_2y + c_2z = d_2\\
+a_3x + b_3y + c_3z = d_3\\
+$$
+
+转换成向量点积形式：
+
+$$
+\begin{pmatrix}
+    a_1 & b_1 & c_1\\
+    a_2 & b_2 & c_2\\
+    a_3 & b_3 & c_3\\
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+    x\\
+    y\\
+    z\\
+\end{pmatrix}
+=
+\begin{pmatrix}
+    d_1\\
+    d_2\\
+    d_3
+\end{pmatrix}
+$$
+
+举个例子，假设三个平面的方程如下：
+
+$$
+x + y - z = -1\\
+2y - z = 3\\
+x + z = 2\\
+$$
+
+将其转换成向量点积形式：
+
+$$
+\begin{pmatrix}
+    1&1&-1\\
+    0&2&-1\\
+    1&0&1\\
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+    x\\
+    y\\
+    z\\
+\end{pmatrix}
+=
+\begin{pmatrix}
+    -1\\
+    3\\
+    2\\
+\end{pmatrix}
+$$
+
+我们就可以借助 NumPy 库对其进行求解：
+
+```py
+def get_three_vector_intersection(matrix, output):
+    """
+    get_three_vector_intersection: 获取三维平面的交点
+
+    :param matrix: 三维平面对应的列分量矩阵
+    :param output: 输出结果对应的列矩阵
+    """
+    try:
+        return np.linalg.solve(np.array(matrix), np.array(output))
+    except np.linalg.LinAlgError:
+        # 如果发生异常，就表示平行了，返回false
+        return False
+```
+
+下面来使用上述案例来测试：
+
+```py
+matrix = (
+    (1, 1, -1),
+    (0, 2, -1),
+    (1, 0, 1)
+)
+output = (-1, 3, 2)
+print(get_three_vector_intersection(matrix, output))    # [-1.  3.  3.]
+```
+
+### 7.3.3 用代数方法研究超平面
+
+准确地说，n 维的超平面是具有 n 个位置变量的线性方程的解。直线是二维空间中的一维
+超平面，平面测试三维空间中的二维超平面。正如我们猜测的那样，思维空间中的标准形式
+线性方程如下：
+
+$$aw + bx + cy + dz = c$$
+
+无论维数和方程数是多少，都可以将前面有 n 个未知数和 m 个方程的线性方程组重写如下
+公式：
+
+$$
+\begin{pmatrix}
+    a_{11} & a_{12} & ... & a_{1n}\\
+    a_{21} & a_{22} & ... & a_{2n}\\
+    . & . & . & .\\
+    . & . &  .  & .\\
+    . & . &   . & .\\
+    a_{m1} & a_{m2} & ... & a_{mn}\\
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+    x_1\\
+    x_2\\
+    .\\
+    .\\
+    .\\
+    x_n\\
+\end{pmatrix}
+=
+\begin{pmatrix}
+    b_1\\
+    b_2\\
+    .\\
+    .\\
+    .\\
+    b_m\\
+\end{pmatrix}
+$$
+
+### 7.3.4 计算维数、方程和解
+
+### 7.3.5 练习
+
+练习 7.16：通过(5, 4)并垂直于(-3, 3)的直线方程是什么？
+
+$$
+(-3, 3)\cdot(x - 5, y - 4) = 0
+-3x + 15 + 3y - 12 = 0
+x - y = 1
+$$
+
+## 7.4 通过线性方程来改变向量的基
+
+向量的线性无关概念显然与线性方程的独立性概念有关。这种关联源于：解线性方程组相当
+于使用不同的基重写向量。我们在二维中探讨一下这个问题。当写出如(4, 3)的向量坐标时
+，会隐式地将向量写成标准基向量的线性组合。
+
+$$
+(4, 2) = 4e_1 + 2e_2
+$$
+
+其中标准基向量分别为 $e_1=(1, 0)$、$e_2=(0, 1)$。但是这不是(4, 2)向量的唯一表示
+形式。我们也可以基于其他基向量来表示 (4, 2)。例如
+：$a\cdot(1, 1) + b\cdot(-1, 1) = (4, 2)$。
+
+该线性方程等价于如下矩阵：
+
+$$
+\begin{pmatrix}
+    1 & -1\\
+    1 & 1\\
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+    a\\
+    b
+\end{pmatrix}
+=
+\begin{pmatrix}
+    4\\
+    2\\
+\end{pmatrix}
+$$
+
+从而计算出 a = 3，b = -1。$(4, 2) = 3u_1 - 1u_2$，其
+中$u_1=(1, 1), u_2=(-1, 1)$。
+
+求向量相对于不同基的坐标是一个计算问题，这个问题实际上是线性方程组的变形。
+
+### 7.4.1 在三维空间中求解
+
+我们从一个三维线性方程组的例子入手：
+
+$$
+\begin{pmatrix}
+    1 & -1 & 0\\
+    0 & -1 & -1\\
+    1 & 0 & 2\\
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+    x\\
+    y\\
+    z\\
+\end{pmatrix}
+=
+\begin{pmatrix}
+    1\\
+    3\\
+    -7
+\end{pmatrix}
+$$
+
+x-y=1 -y-z=3 x+z=-2 x+2z=-7 x=3 y=2 z=-5
+
+求得 x=3 ，y=2，z=-5。即表示坐标(1, 3, -7)用基向量(1, 0, 1)、(-1, -1, 0)和(0,
+-1, 2)表示的结果是(3, 2, -5)。
+
+这种方法对更高的维度也适用，通过求解相应的线性方程组，可以把一个向量写成其他向量
+的线性组合。但并不是任何时候都可以写成线性组合，也并不是每个线性方程组都有唯一解
+，甚至根本没有解。一个向量集合是否能形成基，在计算上等同于线性方程组是否有唯一解
+。
+
+### 7.4.2 练习
+
+练习 7.27：如何将向量(5, 5)写成(10, 1)和(3, 2)的线性组合？
+
+$$
+\begin{pmatrix}
+    10 & 3\\
+    1 & 2\\
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+    x,
+    y
+\end{pmatrix}
+=
+\begin{pmatrix}
+    5\\
+    5
+\end{pmatrix}
+$$
+
+对应线性方程组为：
+
+$$
+10x+3y=5\\
+10x+20y=50
+$$
+
+答案是：
+
+$$
+y=2.65\\
+x=-0.29
+$$
+
+即：
+
+$$
+-0.29 \cdot
+\begin{pmatrix}
+    10\\
+    1
+\end{pmatrix}
++
+2.65\cdot
+\begin{pmatrix}
+    3\\
+    2
+\end{pmatrix}
+\begin{pmatrix}
+    5\\
+    5
+\end{pmatrix}
+$$
+
+练习 7.28：将向量(3, 0, 6, 9)写成向量(0, 0, 1, 1)、(0, -2,-1, -1)、(1, -2, 0, 2)
+和(0, 0, -2, 1)的线性组合。
+
+对应向量积的矩阵如下：
+
+$$
+\begin{pmatrix}
+    0 & 0 & 1 & 0\\
+    0 & -2 & -2 & 0\\
+    1 & -1 & 0 & -2\\
+    1 & -1 & 2 & 1\\
+\end{pmatrix}
+\cdot
+\begin{pmatrix}
+    a\\
+    b\\
+    c\\
+    d\\
+\end{pmatrix}
+=
+\begin{pmatrix}
+    3\\
+    0\\
+    6\\
+    9
+\end{pmatrix}
+$$
+
+对应方程组为：
+
+$$
+c=3\\
+-2b-2c=0\\
+a-b-2d=6\\
+a-b+2c+d=9\\
+$$
+
+解答：
+
+$$
+a=1\\
+b=-3\\
+c=3\\
+d=-1
+$$
+
+因而线性组合是：
+
+$$
+1\cdot
+\begin{pmatrix}
+    0\\
+    0\\
+    1\\
+    1
+\end{pmatrix}
+-
+3\cdot
+\begin{pmatrix}
+0 \\
+-2\\
+-1\\
+-1\\
+\end{pmatrix}
++
+3\cdot
+\begin{pmatrix}
+1 \\
+-2\\
+0 \\
+2 \\
+\end{pmatrix}
+-
+1\cdot
+\begin{pmatrix}
+0\\
+0\\
+-2\\
+1\\
+\end{pmatrix}
+=
+\begin{pmatrix}
+    3\\
+    0\\
+    6\\
+    9
+\end{pmatrix}
+$$
