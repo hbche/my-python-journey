@@ -128,7 +128,7 @@ class Difference(Expression):
         return self.exp1.evaluate(**bindings) - self.exp2.evaluate(**bindings)
 
     def expand(self):
-        return Difference(self.exp1.expand(), self.exp2.expand())
+        return self
 
 
 class Product(Expression):
@@ -146,13 +146,30 @@ class Product(Expression):
     def evaluate(self, **bindings):
         return self.exp1.evaluate(**bindings) * self.exp2.evaluate(**bindings)
 
-    # TODO
-    # def expand(self):
-    # expanded1 = self.exp1.expand()
-    # expanded2 = self.exp2.expand()
+    def expand(self):
+        expanded1 = self.exp1.expand()
+        expanded2 = self.exp2.expand()
 
-    # if isinstance(expanded1, Sum):  # 如果乘积的第一项是求和，则使用分配率进行展开
-    #     return Sum(expanded1.expand())
+        if isinstance(expanded1, Sum):  # 如果乘积的第一项是求和，则取其中的每一项与乘积的第二项相乘，然后在得到的结果上也调用expand()方法，防止第二项也是求和
+            return Sum(*[
+                Product(
+                    e,
+                    expanded2
+                ).expand()
+                for e in expanded1.exps
+            ])
+        elif isinstance(expanded2, Sum):
+            # 如果乘积的第二项是求和，则把它的每项与第一项相乘
+            return Sum(*[
+                Product(
+                    expanded1,
+                    e
+                )
+                for e in expanded2.exps
+            ])
+        else:
+            # 如果两项都不是求和，则不需要使用分配律
+            return Product(expanded1, expanded2)
 
 
 class Quotient(Expression):
@@ -171,6 +188,9 @@ class Quotient(Expression):
         return self.numerator.evaluate(**bindings) / self.denominator.evaluate(
             **bindings
         )
+    
+    def expand(self):
+        return self
 
 
 class Negative(Expression):
@@ -186,6 +206,9 @@ class Negative(Expression):
 
     def evaluate(self, **bindings):
         return -self.exp.evaluate(**bindings)
+    
+    def expand(self):
+        return self
 
 
 class Power(Expression):
@@ -203,6 +226,8 @@ class Power(Expression):
     def evaluate(self, **bindings):
         return self.base.evaluate(**bindings) ** (self.exponent.evaluate(**bindings))
 
+    def expand(self):
+        return self
 
 class Function:
     """
@@ -229,6 +254,9 @@ class Apply(Expression):
         return _function_bindings[self.funciton.name](
             self.argument.evaluate(**bindings)
         )
+
+    def expand(self):
+        return Apply(self.function, self.argument.expand())
 
 
 def distinct_variables(exp: Expression):
