@@ -5,15 +5,33 @@
   "editor.formatOnSave": true,
 
   // Markdown设置
-  "markdown.format.enable": true,
-  "markdown.format.lineLength": 80,
+  // 3. 针对 Markdown 文件的专项设置
+  "[markdown]": {
+    // 指定 Markdown All in One 为默认格式化器
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one",
+    // 开启保存时自动格式化
+    "editor.formatOnSave": true,
+    // 建议配合：在编辑器内也开启 80 字符换行显示，保持视觉一致
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wordWrapColumn": 80
+  },
 
   // Prettier设置
   "prettier.printWidth": 80,
-  "prettier.proseWrap": "always",
 
-  // 指定默认格式化工具
-  "[markdown]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  // Python代码设置
+  // 设置 Python 文件的默认格式化器
+  "[python]": {
+    // 如果你用的是 Ruff (推荐)
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      // 保存时自动修复错误并组织 import 语句
+      "source.fixAll.ruff": "always",
+      "source.organizeImports.ruff": "always"
+    },
+    "editor.rulers": [80],
+    "editor.guides.bracketPairs": true
+  },
 }
