@@ -1,4 +1,4 @@
-# 第一章 初始智能体
+# 第一章 初识智能体
 
 ## 1.1 什么是智能体？
 
@@ -242,5 +242,138 @@ class OpenAICompatibleClient:
 ### 1.3.3 执行行动循环
 
 ``` py
+import os
+import re
 
+from open_ai import OpenAICompatibleClient
+from tools import available_tools
+
+# 设置 prompt 模板
+AGENT_SYSTEM_PROMPT = """
+你是一个智能旅行助手。你的任务是分析用户的请求，并使用可用工具一步步地解决问题。
+
+# 可用工具:
+- `get_weather(city: str)`: 查询指定城市的实时天气。
+- `get_attraction(city: str, weather: str)`: 根据城市和天气搜索推荐的旅游景点。
+
+# 输出格式要求:
+你的每次回复必须严格遵循以下格式，包含一对Thought和Action：
+
+Thought: [你的思考过程和下一步计划]
+Action: [你要执行的具体行动]
+
+Action的格式必须是以下之一：
+1. 调用工具：function_name(arg_name="arg_value")
+2. 结束任务：Finish[最终答案]
+
+# 重要提示:
+- 每次只输出一对Thought-Action
+- Action必须在同一行，不要换行
+- 当收集到足够信息可以回答用户问题时，必须使用 Action: Finish[最终答案] 格式结束
+
+请开始吧！
+"""
+
+# --- 1.配置LLM客户端 ---
+# 根据我们使用的服务，将这里替换成对应的凭证和地址
+# 用于创建OpenAI实例
+API_KEY = "sk-386f6792a0564a268095d277f8881307"
+BASE_URL = "https://api.deepseek.com"
+# 用于创建 DeepSeek请求
+MODEL_ID = "deepseek-chat"
+TAVILY_API_KEY = "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"
+os.environ["TAVILY_API_KEY"] = TAVILY_API_KEY
+
+llm = OpenAICompatibleClient(model=MODEL_ID, api_key=API_KEY, base_url=BASE_URL)
+
+# ---2.初始化 ---
+user_prompt = "你好，请帮我查询一下今天武汉的天气，然后根据天气推荐一个合适的旅游景点。"
+prompt_history = [f"用户请求: {user_prompt}"]
+
+print(f"用户输入: {user_prompt}\n" + "=" * 40)
+
+# ---3.运行主循环---
+for i in range(5):  # 设置最大循环次数
+    print(f"--- 循环 {i + 1} ---\n")
+
+    # 3.1 构建Prompt
+    full_prompt = "\n".join(prompt_history)
+
+    # 3.2 调用LLM进行思考
+    llm_output = llm.generate(full_prompt, system_prompt=AGENT_SYSTEM_PROMPT)
+    # 模型可能会输出多余的Thought-Action，需要截断
+    match = re.search(
+        r"(Thought:.*?Action:.*?)(?=\n\s*(?:Thought:|Action:|Observation:)|\Z)",
+        llm_output,
+        re.DOTALL,
+    )
+    if match:
+        truncated = match.group(1).strip()
+        if truncated != llm_output.strip():
+            llm_output = truncated
+            print("已截断多余的 Thought-Action 对")
+    print(f"模型输出:\n{llm_output}\n")
+    prompt_history.append(llm_output)
+
+    # 3.3. 解析并执行行动
+    action_match = re.search(r"Action: (.*)", llm_output, re.DOTALL)
+    if not action_match:
+        observation = "错误: 未能解析到 Action 字段。请确保你的回复严格遵循 'Thought: ... Action: ...' 的格式。"
+        observation_str = f"Observation: {observation}"
+        print(f"{observation_str}\n" + "=" * 40)
+        prompt_history.append(observation_str)
+        continue
+    action_str = action_match.group(1).strip()
+
+    if action_str.startswith("Finish"):
+        final_answer = re.match(r"Finish\[(.*)\]", action_str).group(1)
+        print(f"任务完成，最终答案: {final_answer}")
+        break
+
+    tool_name = re.search(r"(\w+)\(", action_str).group(1)
+    args_str = re.search(r"\((.*)\)", action_str).group(1)
+    kwargs = dict(re.findall(r'(\w+)="([^"]*)"', args_str))
+
+    if tool_name in available_tools:
+        observation = available_tools[tool_name](**kwargs)
+    else:
+        observation = f"错误:未定义的工具 '{tool_name}'"
+
+    # 3.4. 记录观察结果
+    observation_str = f"Observation: {observation}"
+    print(f"{observation_str}\n" + "=" * 40)
+    prompt_history.append(observation_str)
 ```
+
+## 1.4 智能体应用的协作模式
+
+智能体的工作模主要分为两种：一种是作为高效工具，深度融入我们的工作流；另一种则是作为自主的协作者，与其他智能体协作完成复杂目标。
+
+### 1.4.1 作为开发者工具的智能体
+
+这种场景下它作为辅助工具融入到开发者的工作流中，它作为增强而非取代开发者的角色，通过自动化处理繁琐、重复的任务，让开发者专注于核心工作。
+
+示例：
+- GithubCopilot
+- ClaudeCode
+- Trace
+- Cursor
+
+### 1.4.2 作为自主协作者的智能体
+
+在这种模式下，我们不再手把手指导AI完成每一步，而是将一个高层级目标委托给它。智能体会独立地进行规划、推理、执行和反思，直到最终交付成果。
+
+当前，实现这种自主协作的思路百花齐放，涌现了大量优秀的框架和产品，从早期的 BabyAGI、AutoGPT，到如今更为成熟的 CrewAI、AutoGen、MetaGPT、LangGraph 等优秀框架，共同推动着这一领域的高速发展。虽然具体实现千差万别，但它们的架构范式大致可以归纳为几个主流方向：
+
+1. 单智能体自主循环：这是早期的经典范式，如AgentGPT所代表的模型。其核心是一个通用智能体通过“思考-规划-执行-反思”的闭环，不断进行自我提示和迭代，以完成一个开放式的高层级目标。
+2. 多智能体协作：这是当前最主流的探索方向，旨在通过模拟人类团队的协作模式来解决复杂问题。
+3. 高级控制流框架：诸如 LangGraph 等框架，则更侧重于为智能体提供更强大的底层工程基础。它将智能体的执行过程建模为状态图（State Graph），从而能更灵活、更可靠地实现循环、分支、回溯以及人工介入等复杂流程。
+
+
+### 1.4.3 Workflow和Agent的差异
+
+简单来说，Workflow 是让 AI 按部就班地执行指令，而 Agent 则是赋予 AI 自由度去自主达成目标。
+
+与工作流不同，基于大型语言模型的智能体是一个具备自主性的、以目标为导向的系统。
+
+基于1.3的案例，在这个过程中，没有任何写死的if天气=晴天 then 推荐颐和园的规则。如果天气是“雨天”，Agent 会自主推理并推荐国家博物馆、首都博物馆等室内场所。这种基于实时信息进行动态推理和决策的能力，正是 Agent 的核心价值所在。

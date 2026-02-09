@@ -1,6 +1,8 @@
-import requests
 import os
+
+import requests
 from tavily import TavilyClient
+
 
 def get_weather(city: str) -> str:
     """
@@ -16,12 +18,10 @@ def get_weather(city: str) -> str:
         # 解析返回的JSON数据
         data = response.json()
 
-        print(f"当前响应数据：{data}")
-
         # 获取当天天气情况
-        current_condition = data['current_condition'][0]
-        weather_desc = current_condition['weatherDesc'][0]['value']
-        temp_c = current_condition['temp_C']
+        current_condition = data["current_condition"][0]
+        weather_desc = current_condition["weatherDesc"][0]["value"]
+        temp_c = current_condition["temp_C"]
 
         return f"{city}当前的天气：{weather_desc}，气温{temp_c}摄氏度"
     except requests.exceptions.RequestException as e:
@@ -30,14 +30,15 @@ def get_weather(city: str) -> str:
     except (KeyError, IndexError) as e:
         # 处理数据解析错误
         return f"错误: 解析天气数据失败，可能是城市名称无效 - {e}"
-    
+
+
 def get_attraction(city: str, weather: str) -> str:
     """
     get_attraction: 根据城市和天气，使用 Tavily Search API 搜素并返回优化后的景点推荐。
     """
 
     # 根据Tavily API 初始化其客户端实例
-    api_key = os.environ.get('TAVILY_API_KEY' )
+    api_key = os.environ.get("TAVILY_API_KEY")
     if not api_key:
         print("错误: 未配置TAVILY_API_KEY环境变量。")
     client = TavilyClient(api_key)
@@ -46,21 +47,19 @@ def get_attraction(city: str, weather: str) -> str:
     try:
         response = client.search(query=query, search_depth="basic", include_answer=True)
 
-        if response.get('weather'):
-            return response['answer']
-        
+        if response.get("weather"):
+            return response["answer"]
+
         formatted_results = []
-        for result in response.get('weather', []):
+        for result in response.get("weather", []):
             formatted_results.append(f"- {result['title']}: {result['content']}")
-        
+
         if not formatted_results:
             return "抱歉！没有找到相关的旅游景点推荐。"
-        
+
         return f"根据搜索，为您找到以下信息：\n {'\n'.join(formatted_results)}"
     except Exception as e:
-        return f'错误: 执行Tavily搜索时出现问题 - {e}'
-    
-available_tools = {
-    'get_weather': get_weather,
-    'get_attraction': get_attraction
-}
+        return f"错误: 执行Tavily搜索时出现问题 - {e}"
+
+
+available_tools = {"get_weather": get_weather, "get_attraction": get_attraction}

@@ -16,13 +16,12 @@ class OpenAICompatibleClient:
         print("正在调用大语言模型")
         try:
             messages = [
-                {'role': 'system', 'prompt': system_prompt},
-                {'role': 'user', 'prompt': prompt}
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
             ]
+            # 参照DeepSeek官网API调用示例 https://api-docs.deepseek.com/zh-cn/
             response = self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                stream=False
+                model=self.model, messages=messages, stream=False
             )
             answer = response.choices[0].message.content
             print("大语言模型响应成功")
