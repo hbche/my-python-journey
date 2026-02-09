@@ -18,8 +18,6 @@ def get_weather(city: str) -> str:
         # 解析返回的JSON数据
         data = response.json()
 
-        print(f"当前响应数据：{data}")
-
         # 获取当天天气情况
         current_condition = data["current_condition"][0]
         weather_desc = current_condition["weatherDesc"][0]["value"]
