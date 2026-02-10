@@ -32,3 +32,8 @@
 
 1. 花了多久？
 2. 得到了什么？
+
+
+## 配套资源
+
+[官方配套代码库](https://github.com/orlandpm/Math-for-Programmers)

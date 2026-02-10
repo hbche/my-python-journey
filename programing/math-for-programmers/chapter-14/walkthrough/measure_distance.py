@@ -1,29 +1,3 @@
-# 第 14 章 数据的函数拟合
-
-目标
-- 衡量函数模型和数据集的接近程度
-- 探索常数决定的函数空间
-- 使用功能梯度下降法优化拟合质量
-- 用不同类型的函数对数据集进行建模
-
-## 14.1 衡量函数的拟合质量
-
-代价函数：取当前线性函数的计算值作为输入，并返回一个数，表示当前线性代数计算的结果距离原始值有多远。然后可以针对任意数据集和代价函数来衡量线性代数 $f(x)=ax+b$ 的拟合程度。
-
-通过编写代价函数计算当前函数的偏差，如果每一对数据的偏差都为零，则这个函数就是对数据的完全拟合。但现实的情况是，函数不会与所有数据点完全一致，代价函数会返回某个正数。
-
-常见的代价函数实现：
-
-- sum_error: 把数据集里每一个$(x, y)$对应的$f(x)$到y的距离加起来。
-- sum_square_error: 把这些距离的平方加起来。
-
-第二个是实践中最常用的代价函数。
-
-### 14.1.1 计算数据与函数的距离
-
-我们假设拟合函数为 $f(x)=2*x$，现在绘制数据点距离该拟合函数的距离：
-
-``` py
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -52,11 +26,15 @@ test_data = [
 ]
 
 
-def linear(x):
+def linear_1(x):
     """
     拟合函数
     """
     return 2 * x
+
+
+def linear_2(x):
+    return 1 - x
 
 
 def plot_distance(f, data):
@@ -79,7 +57,6 @@ def plot_test_data(f, data):
     plot_distance(f, data)
 
 
-plot_test_data(linear, test_data)
+plot_test_data(linear_2, test_data)
 
 plt.show()
-```
