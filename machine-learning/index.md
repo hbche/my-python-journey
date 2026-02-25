@@ -1,3 +1,3 @@
 # 机器学习
 
-## [Python机器学习基础教程](./introduction-to-machine-learning-with-python/README.md)
+## [机器学习实战：基于Scikit-Learn、Keras和TensorFlow（原书第3版）](./ML-in-action/README.md)
