@@ -11,13 +11,13 @@
     "editor.defaultFormatter": "yzhang.markdown-all-in-one",
     // 开启保存时自动格式化
     "editor.formatOnSave": true,
-    // 建议配合：在编辑器内也开启 80 字符换行显示，保持视觉一致
+    // 建议配合：在编辑器内也开启 120 字符换行显示，保持视觉一致
     "editor.wordWrap": "wordWrapColumn",
-    "editor.wordWrapColumn": 80
+    "editor.wordWrapColumn": 120
   },
 
   // Prettier设置
-  "prettier.printWidth": 80,
+  "prettier.printWidth": 120,
 
   // Python代码设置
   // 设置 Python 文件的默认格式化器
@@ -31,7 +31,7 @@
       "source.fixAll.ruff": "always",
       "source.organizeImports.ruff": "always"
     },
-    "editor.rulers": [80],
+    "editor.rulers": [120],
     "editor.guides.bracketPairs": true
   },
 }
