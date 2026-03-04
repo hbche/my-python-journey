@@ -1,4 +1,4 @@
-# Matplotlib绘图库学习
+# Matplotlib 绘图库学习
 
 记录学习Matplotlib绘制标量的图形
 
