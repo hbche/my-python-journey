@@ -1,36 +1,36 @@
 # Matplotlib 绘图库学习
 
-记录学习Matplotlib绘制标量的图形
+这个笔记本展示了如何使用 matplotlib 库绘制精美的图表。
 
 ## 使用Plot绘制我们的第一个图形
 
 首先，我们需要导入 `matplotlib` 库：
 
-``` py
+```py
 import matplotlib
 ```
 
 现在让我们绘制我们的图像！:)
 
-``` py
+```py
 import matplotlib.pyplot as plt
 
 plt.plot([1, 2, 4, 9, 5, 3])
 plt.show()
 ```
 
-我们第一个matplotlib绘图程序就写好了，使用一些简单的数据，调用 `plot` 和 `show` 方法就完成了。
+我们第一个 matplotlib 绘图程序就写好了，使用一些简单的数据，调用 `plot` 和 `show` 方法就完成了。
 
 如果绘图函数 `plot` 接收一个数据数组，它将使用该数组作为纵轴坐标，并将数组中每个数据点的索引作为横轴坐标。我们也可以提供两个数组：一个用于横轴 x，另一个用于纵轴 y：
 
-``` py
+```py
 plt.plot([-3, -2, 5, 0], [1, 6, 4, 3])
 plt.show()
 ```
 
 坐标轴会自动与数据范围匹配。我们希望给图表留出更多空间，因此让我们调用坐标轴函数 `axis` 来更改每个坐标轴的范围 [xmin, xmax, ymin, ymax]。
 
-``` py
+```py
 plt.plot([-3, -2, 5, 0], [1, 6, 4, 3])
 plt.axis([-4, 6, 0, 7])
 plt.show()
@@ -38,7 +38,7 @@ plt.show()
 
 现在，让我们绘制一个数学函数。我们使用 NumPy 的 `linspace` 函数创建一个包含 500 个浮点数的数组 x，取值范围从 -2 到 2，然后我们创建第二个数组 y，计算方法是 x 的平方（要了解 NumPy，请阅读 NumPy 教程）。
 
-``` py
+```py
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -51,7 +51,7 @@ plt.show()
 
 这有点枯燥，我们来添加标题、x轴和y轴标签，并绘制一个网格。
 
-``` py
+```py
 # 添加标题
 plt.title("Square function")
 # 添加x坐标轴标签
@@ -69,7 +69,7 @@ plt.show()
 
 默认情况下，matplotlib 会在连续点之间绘制一条线。
 
-``` py
+```py
 plt.plot([0, 100, 100, 0, 0, 100, 50, 0, 100],
          [0, 0, 100, 100, 0, 100, 130, 100, 0])
 plt.axis([-10, 110, -10, 140])
@@ -78,7 +78,7 @@ plt.show()
 
 我们可以传递第三个参数来更改线条的样式和颜色。例如，`"g--"` 表示“绿色虚线”。
 
-``` py
+```py
 x = [0, 100, 100, 0, 0, 100, 50, 0, 100]
 y = [0, 0, 100, 100, 0, 100, 130, 100, 0]
 
@@ -90,7 +90,7 @@ plt.show()
 
 我们还可以在同一张图上绘制多条线，操作非常简单：只需传递 `x1, y1, [style1], x2, y2, [style2], ...`
 
-``` py
+```py
 x1 = [0, 100, 100, 0, 0, 100, 50, 0, 100]
 y1 = [0, 0, 100, 100, 0, 100, 130, 100, 0]
 x2 = [0, 100, 100, 0, 0]
@@ -103,7 +103,7 @@ plt.show()
 
 或者是在调用 `show` 之前多次调用 `plot` 绘制多条线。
 
-``` py
+```py
 plt.plot(x1, y1, "g--")
 plt.plot(x2, y2, "r-")
 plt.show()
@@ -111,7 +111,7 @@ plt.show()
 
 也可以绘制简单的点而不是线。这里有一个示例，使用了绿色虚线、红色点线和蓝色三角形。有关完整的样式和颜色选项列表，请参阅[文档](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot)。
 
-``` py
+```py
 x = np.linspace(-1.4, 1.4, 30)
 # 以不同的格式绘制三条线：红色虚线、绿色点线和蓝色三角形线
 plt.plot(x, x, "r--")
@@ -123,7 +123,7 @@ plt.show()
 
 plot 函数返回一个 `Line2D` 对象列表（每条线对应一个对象）。我们也可以为这些线设置额外的属性，例如线宽、虚线样式或透明度。请参阅[文档](https://matplotlib.org/stable/tutorials/pyplot.html)中的完整属性列表。
 
-``` py
+```py
 x = np.linspace(-1.4, 1.4, 30)
 # 返回一个 Line2D 对象列表
 line1, line2, line3 = plt.plot(x, x, "r--", x, x**2, "g:", x, x**3, "b^")
@@ -138,7 +138,7 @@ plt.show()
 
 将图像保存到磁盘非常简单，只需调用 [`savefig`](https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html) 函数并传入文件名（或文件对象）即可。可用的图像格式取决于我们使用的图形后端。
 
-``` py
+```py
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -153,7 +153,7 @@ plt.savefig("quadratic.png", transparent=True)
 
 matplotlib 图形可以包含多个子图。这些子图以网格形式排列。要创建子图，只需调用 `subplot` 函数，并指定图形的行数和列数，以及要绘制的子图的索引（从 1 开始，然后从左到右，从上到下）。请注意，pyplot 会跟踪当前活动的子图（可以通过调用 `plt.gca()` 获取其引用），因此当您调用 `plot` 函数时，它会在活动的子图上绘制图形。
 
-``` py
+```py
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -179,7 +179,7 @@ plt.show()
 
 创建跨越多个网格单元的子图也非常简单，如下所示：
 
-``` py
+```py
 x = np.linspace(-1.4, 1.4, 30)
 
 # 2 行, 2 列, 第一个子图
@@ -207,14 +207,14 @@ plt.show()
 
 如果需要更复杂的子图定位，可以使用 `subplot2grid` 代替 `subplot`。我们需要指定网格的行数和列数，然后指定子图在网格中的位置（左上角 = (0,0)），还可以选择性地指定子图跨越的行数和/或列数。例如：
 
-``` py
+```py
 # subplot2grid()函数的第一个参数是一个元组，表示整个图表被分成了几行几列；第二个参数也是一个元组，表示当前子图所在的位置；第三个参数colspan表示当前子图占据多少列；第四个参数rowspan表示当前子图占据多少行。
 
 # 在这个例子中，整个图表被分成了3行3列，第一幅图占据了前两行和前两列，第二幅图占据了第一行的第三列，第三幅图占据了第二行和第三行的第三列，第四幅图占据了第三行的前两列。
 plt.subplot2grid((3, 3), (0, 0), colspan=2, rowspan=2)
 plt.plot(x, x)
 
-# 
+#
 plt.subplot2grid((3, 3), (0, 2))
 plt.plot(x, x**2)
 
@@ -233,7 +233,7 @@ plt.show()
 
 也可以绘制多个图形。每个图形可以包含一个或多个子图。默认情况下，matplotlib 会自动创建 figure(1)。切换图形时，pyplot 会跟踪当前活动的图形（可以通过调用 `plt.gcf()` 获取其引用），并且该图形的活动子图将成为当前子图。
 
-``` py
+```py
 x = np.linspace(-1.4, 1.4, 30)
 
 # 说明：plt.figure()函数创建一个新的图形窗口，figsize参数指定图形的宽度和高度（单位为英寸）。plt.subplot()函数用于在同一图形窗口中创建多个子图，第一个参数表示行数，第二个参数表示列数，第三个参数表示当前子图的位置。plt.plot()函数用于绘制数据，参数分别是x轴数据、y轴数据、线条样式和标签。plt.title()函数设置图形的标题。最后，plt.show()函数显示所有的图形窗口。
@@ -262,13 +262,13 @@ plt.show()
 
 但是，在编写程序时，显式比隐式更好。显式代码通常更容易调试和维护，如果你不相信我，只需阅读《Python之禅》中的第二条规则：
 
-``` py
+```py
 import this
 ```
 
 输出：
 
-``` bash
+```bash
 The Zen of Python, by Tim Peters
 
 Beautiful is better than ugly.
@@ -294,7 +294,7 @@ Namespaces are one honking great idea -- let's do more of those!
 
 接下来，我们来显示地调用函数进行绘图：
 
-``` py
+```py
 x = np.linspace(-2, 2, 200)
 
 # 创建一个包含两个子图的图形对象fig1，并共享x轴。设置图形大小为10英寸宽，5英寸高。在第一个子图ax_top上绘制两条曲线，分别是sin(3*x^2)和cos(5*x^2)，使用红色实线和蓝色实线表示。在第二个子图ax_bottom上绘制一条曲线sin(3*x)，使用红色虚线表示。最后，在第一个子图上启用网格。
@@ -325,7 +325,7 @@ Pylab 是一个便捷模块，它在同一个命名空间内导入了 matplotlib
 
 我们可以使用 `text` 函数在图表中的任意位置添加文本。只需指定水平和垂直坐标以及文本内容，还可以选择性地添加一些额外参数。matplotlib 中的任何文本都可以包含 TeX 公式表达式，更多详情请参阅[文档](https://matplotlib.org/stable/tutorials/text/mathtext.html)。
 
-``` py
+```py
 x = np.linspace(-1.5, 1.5, 30)
 px = 0.8
 py = px**2
@@ -357,7 +357,7 @@ plt.show()
 
 有时需要对图表中的元素进行注释，例如上面提到的那个漂亮的点。注释函数 `annotate` 让这项工作变得非常简单：只需指定感兴趣点的位置和文本的位置，还可以选择性地添加一些额外的参数来控制文本和箭头。
 
-``` py
+```py
 x = np.linspace(-1.5, 1.5, 30)
 px = 0.8
 py = px**2
@@ -385,7 +385,7 @@ plt.show()
 
 我们还可以使用 `bbox` 参数为文本添加边界框：
 
-``` py
+```py
 x = np.linspace(-1.5, 1.5, 30)
 px = 0.8
 py = px**2
@@ -418,7 +418,7 @@ plt.show()
 
 纯粹为了好玩，如果你想要一个 [xkcd](https://xkcd.com/) 风格的图，只需在 `plt.xkcd()` 部分中绘制即可：
 
-``` py
+```py
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -457,7 +457,7 @@ with plt.xkcd():
 
 添加图例最简单的方法是在所有行上设置标签，然后调用图例函数。
 
-``` py
+```py
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -477,7 +477,7 @@ plt.show()
 
 Matplotlib 支持非线性比例尺，例如对数或分对数比例尺。
 
-``` py
+```py
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -522,7 +522,7 @@ plt.show()
 
 但有时你需要更多控制（例如，上方的logit图形有太多刻度标签）。幸运的是，matplotlib为你提供了对刻度的完全控制。你甚至可以启用次要刻度。
 
-``` py
+```py
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -559,7 +559,7 @@ plt.show()
 
 绘制极坐标图就像在创建子图时将投影参数设为"polar"一样简单。
 
-``` py
+```py
 # 设置圆的半径为 1
 radius = 1
 # 生成角度数组 theta，从 0 到 2π，共 1000 个点
@@ -580,7 +580,7 @@ plt.show()
 
 绘制三维图表相当直接：创建子图时，将投影设置为"3d"。它会返回一个3D坐标轴对象，你可以用它来调用plot_surface，提供x、y和z坐标以及其他可选参数。要了解关于生成3D图形的更多信息，可以查看[matplotlib教程](https://matplotlib.org/stable/users/explain/toolkits/mplot3d.html)。
 
-``` py
+```py
 # 生成从 -5 到 5 的等间距数组，各 50 个点
 x = np.linspace(-5, 5, 50)
 y = np.linspace(-5, 5, 50)
@@ -609,7 +609,7 @@ plt.show()
 
 展示相同数据的另一种方式是通过等高线图 `contour`。
 
-``` py
+```py
 
 # 生成从 -5 到 5 的等间距数组，各 50 个点
 x = np.linspace(-5, 5, 50)
@@ -646,7 +646,7 @@ plt.show()
 
 要绘制散点图，只需提供各点的x和y坐标。
 
-``` py
+```py
 # 设置随机种子，确保每次运行生成的随机数相同（便于复现结果）
 np.random.seed(42)
 
@@ -663,7 +663,7 @@ plt.show()
 
 我们也可以选择性地提供各点的比例尺。
 
-``` py
+```py
 # 设置随机种子，确保每次运行生成的随机数相同（便于复现结果）
 np.random.seed(42)
 
@@ -686,7 +686,7 @@ plt.show()
 
 与往常一样，我们可以提供其他一些参数，比如填充颜色、边缘颜色以及透明度级别。
 
-``` py
+```py
 import matplotlib.pyplot as plt
 import numpy as np
 
