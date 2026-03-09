@@ -14,13 +14,17 @@
 
 ## 科学计算 Python 教程
 
-### Numpy
+### [Numpy](./tools-numpy/index.md)
 
 ### [Matplotlib](./tools-matplotlib/index.md)
 
-### Pandas
+### [Pandas](./tools-pandas/index.md)
 
 ## 数学教程
+
+### [线性代数](https://github.com/ageron/handson-ml3/blob/79d250ff988bec8764f33c16601d7da23e8b681f//math_linear_algebra.ipynb)
+
+### [微积分](https://github.com/ageron/handson-ml3/blob/79d250ff988bec8764f33c16601d7da23e8b681f//math_differential_calculus.ipynb)
 
 ## 先决条件
 
@@ -30,8 +34,8 @@
 - Scientific Python -- 我们将使用几个流行的Python库，特别是NumPy、matplotlib和pandas。如果我们不熟悉这些库，或许应该先从工具部分的教程开始学习（尤其是NumPy）。
 - Math - 我们也会用到一些线性代数、微积分、统计学和概率论的知识。如果我们之前学过这些，应该能跟上，因为不会涉及很高深的内容；但如果我们不了解这些主题或需要复习，请参阅数学部分的相应介绍。
 
-
 ## 读书心得
+
 1. 深度学习已经取得了哪些进展？
 2. 深度学习有多重要？
 3. 我们下一步将走向何方？
