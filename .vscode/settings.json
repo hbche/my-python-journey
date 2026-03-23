@@ -8,7 +8,7 @@
   // 3. 针对 Markdown 文件的专项设置
   "[markdown]": {
     // 指定 Markdown All in One 为默认格式化器
-    "editor.defaultFormatter": "yzhang.markdown-all-in-one",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     // 开启保存时自动格式化
     "editor.formatOnSave": true,
     // 建议配合：在编辑器内也开启 120 字符换行显示，保持视觉一致
