@@ -1612,7 +1612,120 @@ $$A = U \Sigma V^T$$
 
 在 numpy 的 `linalg` 模块中，可以使用 `svd` 函数计算矩阵的奇异值：
 
+```py
+m4 = np.array([[1,0,0,0,2], [0,0,3,0,0], [0,0,0,0,0], [0,2,0,0,0]])
+U, S_diag, V = np.linalg.svd(m4)
+print(U)
+# [[ 0.  1.  0.  0.]
+#  [ 1.  0.  0.  0.]
+#  [ 0.  0.  0.  1.]
+#  [ 0.  0. -1.  0.]]
+print(S_diag)
+# [3.         2.23606798 2.         0.        ]
+print(V)
+# [[-0.          0.          1.         -0.          0.        ]
+#  [ 0.4472136   0.          0.          0.          0.89442719]
+#  [ 0.         -1.          0.          0.          0.        ]
+#  [ 0.          0.          0.          1.          0.        ]
+#  [-0.89442719  0.          0.          0.          0.4472136 ]]
+```
+
+### 对角线与轨
+
+```py
+m3 = np.array([[1,2,3],[5,7,11],[21,29,31]])
+print(np.diag(m3))  # m3对角线（从左上到右下）上的数值
+# [ 1  7 31]
+print(m3.trace())  # 等价于 np.diag(m3).sum()，对对角线元素进行求和
+# 39
+```
+
+### 求解线性标量方程组
+
+`solve` 函数用于求解线性标量方程组，例如：
+
+- $2x + 6y = 6$
+- $5x + 3y = -9$
+
+```py
+# 求解方程组
+# 2x + 6y = 6
+# 5x + 3y = -9
+coeffs = np.array([
+    [2, 6],
+    [5, 3]
+])
+depvars = np.array([6, -9])
+solution = np.linalg.solve(coeffs, depvars)
+print(solution)
+# [-3, 2]
+```
+
+我们来校验这个解是否正确：
+
+```py
+print(np.dot(coeffs, solution))
+# [6, -9]
+```
+
+完全正确！让我们使用另外一种方法验证：
+
+```py
+print(np.allclose(coeffs.dot(solution), depvars))
+# True
+```
+
+#### allclose 函数讲解
+
+- 定义：
+  - `numpy.allclose()` 是一个用于比较两个数组是否“近似相等”的函数。在数值计算中，由于浮点数精度问题，直接判断相等（==）通常不可靠，allclose 通过设置相对容差和绝对容差来判断两个数组是否在可接受的误差范围内相等。
+
+- 语法：
+  - `numpy.allclose(a, b, rtol=1e-5, atol=1e-8, equal_nan=False)`
+- 参数说明：
+  - a,b: 要比较的输入数组
+  - rtol: 相对容差。默认值为 1e-5。相对容差是相对于 abs(b)的。公式中会用到 atol + rtol \* abs(b)。
+  - atol: 绝对容差。默认值为 1e-8。绝对容差是用于直接比较的绝对差值门槛。对于非常接近于零的值，这个参数尤其重要。
+  - equal_nan: 是否将 NaN（非数字）视为相等。如果为 True，则数组相同位置的 NaN 会被认为相等。默认为 False。
+- 返回值：
+  - 如果对于数组 a 和 b 中的所有元素，都满足以下条件，则返回 True；否则返回 False。
+  - absolute(a - b) <= (atol + rtol \* absolute(b))
+
 <!-- TODO -->
+
+## 向量化
+
+与逐个对数组元素单独执行操作相比，坚持使用数组操作能让代码效率大幅提升，这种方法称为向量化。如此一来，我们便能充分利用NumPy的众多优化优势。
+
+例如，假设我们想根据 $sin(xy/40.5)$ 这个公式生成一个 768x1024 的数组。一个糟糕的选项是使用 Python 中的嵌套循环来完成计算：
+
+```py
+import math
+
+data = np.empty((768, 1024))
+for y in range(768):
+    for x in range(1024):
+        data[x, y] = math.sin(x * y / 40.5)
+```
+
+当然可以，但这么做效率极低，因为循环完全是在纯 Python 中进行的。让我们将此算法向量化。首先，我们将使用 NumPy 的 meshgrid 函数，它能从坐标向量生成坐标矩阵。
+
+```py
+import numpy as np
+
+x_coords = np.arange(0, 1024)
+y_coords = np.arange(0, 768)
+X, Y = np.meshgrid(x_coords, y_coords)
+data = np.sin(X*Y/40.5)
+```
+
+我们可以使用 matplotlib 的 `imshow` 函数展示这个数据：
+
+```py
+fig = plt.figure(1, figsize=(7, 6))
+plt.imshow(data, cmap="hot")
+plt.show()
+```
 
 ## 保存与加载
 
