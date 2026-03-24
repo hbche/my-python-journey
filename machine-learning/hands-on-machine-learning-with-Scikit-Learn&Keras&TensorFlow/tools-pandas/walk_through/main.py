@@ -55,21 +55,29 @@ import pandas as pd
 # # charles    112
 # # dtype: int64
 
-surprise = pd.Series([1000, 1001, 1002, 1003])
-print(surprise)
-# 0    1000
-# 1    1001
-# 2    1002
-# 3    1003
+# surprise = pd.Series([1000, 1001, 1002, 1003])
+# print(surprise)
+# # 0    1000
+# # 1    1001
+# # 2    1002
+# # 3    1003
+# # dtype: int64
+# surprise_slice = surprise[2:]
+# print(surprise_slice)
+# # 2    1002
+# # 3    1003
+# # dtype: int64
+# try:
+#     surprise_slice[0]
+# except KeyError as e:
+#     print("Key error: ", e)
+# # Key error:  0
+# print(surprise_slice.iloc[0])   # 1002
+
+
+weight = {"alice": 68, "bob": 83, "colin": 86, "darwin": 68}
+s3 = pd.Series(weight, index=["colin", "alice"])
+print(s3)
+# colin    86
+# alice    68
 # dtype: int64
-surprise_slice = surprise[2:]
-print(surprise_slice)
-# 2    1002
-# 3    1003
-# dtype: int64
-try:
-    surprise_slice[0]
-except KeyError as e:
-    print("Key error: ", e)
-# Key error:  0
-print(surprise_slice.iloc[0])   # 1002
