@@ -1,6 +1,7 @@
 # 第 2 章 端到端机器学习项目
 
 本章要完成的主要步骤：
+
 1. 放眼大局
 2. 获取数据
 3. 探索和可视化数据以获得见解
@@ -13,6 +14,7 @@
 ## 2.1 使用真实数据
 
 流行的开放数据存储库：
+
 - [OpenML.org](https://www.openml.org/)
 - Kaggle.com
 - PapersWithCode.com
@@ -20,16 +22,55 @@
 
 ## 2.2 放眼大局
 
+### 2.2.1 框定问题
+
+### 2.2.2 选择性能指标
+
+回归问题典型性能度量指标是均方根误差 RMSE (Root Mean Square Error)：
+
+$$
+RMSE = \sqrt{\frac{1}{m}\sum_{i=1}^{m}(h(x_i)-y_i)^2}
+$$
+
+- m: 测量RMSE的数据集中的实例数
+- $x_i$: 数据集中地 i 个实例的所有特征值向量，$y_i$是对应的标签
+- X是一个矩阵，包含数据集中所有实例的所有特征值（不包括标签）。
+
+例如：如果数据集中第一个地区位于经度 -118.29°，维度 33.91°，居民有 1416 人，收入中位数为 38372 美元，房屋价值中位数为 156400 美元，那么
+
+$$
+x_1=\begin{bmatrix} -118.29 \\ 33.91 \\ 1416 \\ 38372 \end{bmatrix}
+$$
+
+$$
+y_1 = 156400
+$$
+
+所以对应的矩阵 X 如下所示：
+
+
+
 ## 2.3 获取数据
+
+### 2.3.1 使用 Google Colab 运行代码示例
+
+使用浏览器访问 [Google Colab](https://homl.info/colab3)，选择导入文件
+
+### 2.3.2 保存你的代码更改和数据
+
+### 2.3.3 交互性的力量和危险
+
+### 2.3.4 本书代码与 notebook 代码
 
 ### 2.3.5 下载数据
 
 编写程序获取房屋真实数据：
 
-``` py
+```py
 import tarfile
 import urllib.request
 from pathlib import Path
+
 import pandas as pd
 
 
@@ -47,7 +88,7 @@ def load_housing_data():
     with tarfile.open(tarball_path) as housing_tarball:
         # extractall方法新增了一个filter参数，用于指定提取策略
         # data 过滤器会忽略许多UNIX文件系统/归档格式的专有特性，适合纯粹的数据提取场景
-        # tar 过滤器模拟GUN tar 行为，保留更多类UNIX的我呢间系统特性
+        # tar 过滤器模拟GUN tar 行为，保留更多类UNIX的系统特性
         # full_trusted过滤器是完全信任归档文件
         # 我们此处只为提取数据，所以只需要使用 data 过滤器即可
         housing_tarball.extractall(path="datasets", filter="data")
@@ -57,9 +98,9 @@ def load_housing_data():
 
 ### 2.3.6 快速浏览数据结构
 
-DataFrame的head()方法可以查看前5行数据：
+DataFrame的 `head()` 方法可以查看前5行数据：
 
-``` py
+```py
 housing = load_housing_data()
 # 使用head方法查看前5行数据
 print(housing.head())
@@ -67,7 +108,7 @@ print(housing.head())
 
 info() 方法对于获取数据的快速描述很有用，特别是总行数、每个属性的类型和非空值的数量：
 
-``` py
+```py
 housing = load_housing_data()
 # 获取数据的描述信息
 print(housing.info())
@@ -75,14 +116,15 @@ print(housing.info())
 
 获取某个特征的类别：
 
-``` py
+```py
 housing = load_housing_data()
 # 通过 value_counts()获取某个特征不重复的值的总数，即类别总数
 print(housing["ocean_proximity"].value_counts())
 ```
+
 输出结果如下：
 
-``` shell
+```shell
 ocean_proximity
 <1H OCEAN     9136
 INLAND        6551
@@ -94,7 +136,7 @@ Name: count, dtype: int64
 
 可以使用describe()方法显示数字特征的摘要：
 
-``` py
+```py
 housing = load_housing_data()
 # 通过 describe() 方法获取数字特征的描述信息
 print(housing.describe())
@@ -102,7 +144,7 @@ print(housing.describe())
 
 另一种快速了解我们正在处理数据类型的方法是针对每个特征绘制直方图：
 
-``` py
+```py
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -144,7 +186,7 @@ plt.show()
 
 创建测试集在理论上很简单，随机选择一个实例，通常是数据集的20%，然后将它们放在一边：
 
-``` py
+```py
 import numpy as np
 import pandas as pd
 
@@ -177,7 +219,7 @@ def shuffle_and_split_data(data: pd.DataFrame, test_ratio: float):
 
 但是这两种方案都无法避免后续新增数据集时，获取更新的数据集还保持一致。一个常见的解决方案是依赖每个实例的唯一标识符来决定它是否应该进入测试集。例如，我们可以计算每个实例标识符的哈希值，当该哈希值低于或等于最大实例标识符哈希值的20%时，将其纳入测试集中，可确保测试集在多次运行随机分组之后仍能保持一致，且在新增实例数据的时候也不影响先前的随机分组。
 
-``` py
+```py
 def is_id_in_test_set(identifier, test_ratio):
     return crc32(np.int64(identifier) < test_ratio * 2 ** 32)
 
@@ -194,6 +236,6 @@ def split_data_with_id_hash(data, test_ratio, id_column):
 
 我们的房屋数据没有唯一标识，我们也不能将实例的索引作为唯一标识符，因为如果中间删除了实例或者新增了实例，都会影响索引，我们需要确保唯一标识永远不改变。基于实例的特征，我们可以结合房屋的经纬度生成唯一标识：
 
-``` py
+```py
 
 ```

@@ -19,7 +19,7 @@ def load_housing_data():
     with tarfile.open(tarball_path) as housing_tarball:
         # extractall方法新增了一个filter参数，用于指定提取策略
         # data 过滤器会忽略许多UNIX文件系统/归档格式的专有特性，适合纯粹的数据提取场景
-        # tar 过滤器模拟GUN tar 行为，保留更多类UNIX的我呢间系统特性
+        # tar 过滤器模拟GUN tar 行为，保留更多类UNIX的系统特性
         # full_trusted过滤器是完全信任归档文件
         # 我们此处只为提取数据，所以只需要使用 data 过滤器即可
         housing_tarball.extractall(path="datasets", filter="data")

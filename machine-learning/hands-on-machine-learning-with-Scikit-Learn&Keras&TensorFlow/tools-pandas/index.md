@@ -181,3 +181,171 @@ print(s3)
 ```
 
 ### 自动对齐
+
+当一个操作涉及多个Series对象时，pandas会自动通过匹配索引标签来对齐元素。
+
+```py
+weight = {"alice": 68, "bob": 83, "colin": 86, "darwin": 68}
+s3 = pd.Series(weight)
+print(s3)
+# alice     68
+# bob       83
+# colin     86
+# darwin    68
+# dtype: int64
+
+s2 = pd.Series([68, 83, 11, 68], index=['alice', 'bob', 'charles', 'darwin'])
+print(s2)
+# alice      68
+# bob        83
+# charles    11
+# darwin     68
+# dtype: int64
+
+print(s3.keys())
+# Index(['alice', 'bob', 'colin', 'darwin'], dtype='str')
+print(s2.keys())
+# Index(['alice', 'bob', 'charles', 'darwin'], dtype='str')
+
+print(s2 + s3)
+# alice      136.0
+# bob        166.0
+# charles      NaN
+# colin        NaN
+# darwin     136.0
+# dtype: float64
+```
+
+生成的Series包含来自s2和s3索引标签的并集。由于"colin"在s2中缺失，而"charles"在s3中缺失，这些条目对应的结果值为NaN（即"非数字"表示缺失值）。
+
+当处理来自不同来源、结构不一且存在缺失项的数据时，自动对齐功能非常便利。但如果我们忘记设置正确的索引标签，就可能出现令人意外的结果。
+
+```py
+s2 = pd.Series([68, 83, 11, 68], index=['alice', 'bob', 'charles', 'darwin'])
+s5 = pd.Series([1000, 1000, 1000, 1000])
+print("s2=", s2.values)
+# s2= [ 68  83 112  68]
+print("s5=", s5.values)
+# s5= [1000 1000 1000 1000]
+
+print(s2 + s5)
+# alice     NaN
+# bob       NaN
+# charles   NaN
+# darwin    NaN
+# 0         NaN
+# 1         NaN
+# 2         NaN
+# 3         NaN
+# dtype: float64
+```
+
+由于序列标签完全不匹配，Pandas 无法对齐它们，因此结果全为 NaN。
+
+### 使用标量进行初始化
+
+我们也可以使用标量和索引标签列表来初始化一个 Series 对象：所有元素都将被设置为该标量值。
+
+```py
+meaning = pd.Series(42, ['life', 'unverse', 'everything'])
+print(meaning)
+
+# life          42
+# unverse       42
+# everything    42
+# dtype: int64
+```
+
+### `Series` 名称
+
+一个 `Series` 对象有一个 `name` 属性:
+
+```py
+s6 = pd.Series([83, 68], index=['bob', 'alice'], name="weights")
+print(s6)
+
+# bob      83
+# alice    68
+# Name: weights, dtype: int64
+```
+
+### 可视化 `Series` 对象
+
+Pandas 能够轻松地通过 matplotlib 绘制 Series 数据（有关 matplotlib 的详细信息，请查阅 matplotlib 教程）。只需导入 matplotlib 并调用 plot() 方法即可：
+
+```py
+import matplotlib.pyplot as plt
+temperatures = [4.4, 5.1, 6.1, 6.2, 6.1, 6.1, 5.7, 5.2, 4.7, 4.1, 3.9, 3.5]
+s7 = pd.Series(temperatures, name="Temperature")
+s7.plot()
+plt.show()
+```
+
+绘制数据图有多种选择。无需在此一一列举：如果我们需要特定类型的图表（如直方图、饼图等），只需查阅 Pandas 文档中出色的[“可视化”](https://pandas.pydata.org/pandas-docs/stable/user_guide/visualization.html)部分，并参考其中的示例代码即可。
+
+## 处理时间
+
+许多数据集都带有时间戳，而pandas在处理这类数据方面表现出色：
+
+- 它可以表示期间（如2016年第三季度）和频率（如“每月”）。
+- 它可以将时间周期转换为实际的时间戳，反之亦然。
+- 它可以重新采样数据并以我们想要的任意方式聚合数值。
+- 它可以处理时区。
+
+### 时间范围
+
+让我们首先使用 `pd.date_range()` 创建时间序列。它会返回一个 `DatetimeIndex`，其中包含从 2016 年 10 月 29 日下午 5:30 开始，每小时一个时间点，共 12 小时。
+
+```py
+dates = pd.date_range('2016/10/29 5:30pm', periods=12, freq='h')
+print(dates)
+# DatetimeIndex(['2016-10-29 17:30:00', '2016-10-29 18:30:00',
+#                '2016-10-29 19:30:00', '2016-10-29 20:30:00',
+#                '2016-10-29 21:30:00', '2016-10-29 22:30:00',
+#                '2016-10-29 23:30:00', '2016-10-30 00:30:00',
+#                '2016-10-30 01:30:00', '2016-10-30 02:30:00',
+#                '2016-10-30 03:30:00', '2016-10-30 04:30:00'],
+#               dtype='datetime64[us]', freq='h')
+```
+
+此 `DatetimeIndex` 可用作 `Series` 的索引：
+
+```py
+dates = pd.date_range('2016/10/29 5:30pm', periods=12, freq='h')
+temperatures = [4.4, 5.1, 6.1, 6.2, 6.1, 6.1, 5.7, 5.2, 4.7, 4.1, 3.9, 3.5]
+temp_series = pd.Series(temperatures, index=dates)
+print(temp_series)
+# 2016-10-29 17:30:00    4.4
+# 2016-10-29 18:30:00    5.1
+# 2016-10-29 19:30:00    6.1
+# 2016-10-29 20:30:00    6.2
+# 2016-10-29 21:30:00    6.1
+# 2016-10-29 22:30:00    6.1
+# 2016-10-29 23:30:00    5.7
+# 2016-10-30 00:30:00    5.2
+# 2016-10-30 01:30:00    4.7
+# 2016-10-30 02:30:00    4.1
+# 2016-10-30 03:30:00    3.9
+# 2016-10-30 04:30:00    3.5
+# Freq: h, dtype: float64
+```
+
+让我们可视化这个 series:
+
+```py
+import matplotlib.pyplot as plt
+
+dates = pd.date_range('2016/10/29 5:30pm', periods=12, freq='h')
+temperatures = [4.4, 5.1, 6.1, 6.2, 6.1, 6.1, 5.7, 5.2, 4.7, 4.1, 3.9, 3.5]
+temp_series = pd.Series(temperatures, index=dates)
+temp_series.plot(kind='bar')
+
+plt.title("Temperature Change Over Time")
+plt.xlabel("Date Time")
+plt.xticks(rotation=45, ha='right')  # x轴标签倾斜45度，ha='right' 使标签右对齐避免重叠
+plt.tight_layout()  # 自动调整子图参数，防止标签被窗口边缘截断
+plt.grid(True)
+plt.show()
+```
+
+### 重采样
