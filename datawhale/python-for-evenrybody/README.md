@@ -1,6 +1,6 @@
 # Python for Everybody(PY4E)
 
-[Datawhale 面向所有人的 Python 共学课 2.0](https://www.datawhale.cn/learn/summary/214)
+[面向所有人的 Python 共学课 2.0](https://www.datawhale.cn/learn/summary/214)
 
 本课程包含 **17 个核心单元**，覆盖从编程基础到高阶应用的完整知识体系：
 
