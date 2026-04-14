@@ -257,13 +257,105 @@ for i in range(0, len(query_list) - 1):
 
 ### 向量数据库简介
 
+向量数据库是用于高效计算和管理大量向量数据的解决方案。向量数据库是一种专门用于存储和检索向量数据（embedding）的数据库系统。它与传统的基于关系模型的数据库不同，它主要关注的是向量数据的特性和相似性。
+
+在向量数据库中，数据被表示为向量形式，每个向量代表一个数据项。这些向量可以是数字、文本、图像或其他类型的数据。向量数据库使用高效的索引和查询算法来加速向量数据的存储和检索过程。
+
+Langchain 集成了超过 30 个不同的向量存储库。我们选择 Chroma 是因为它轻量级且数据存储在内存中，这使得它非常容易启动和开始使用。
+
+新版本的 LangChain 将 chroma 模块迁移到了 `langchain-chroma` 包中了，并且依赖 `chromadb` 库。
+
+安装依赖：
+
+```bash
+pip install langchain-chroma chromadb
+```
+
+```py
+import os
+from pathlib import Path
+
+from dotenv import find_dotenv, load_dotenv
+from langchain_chroma import Chroma
+from langchain_community.document_loaders import PyMuPDFLoader
+from langchain_community.embeddings import DashScopeEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+# 指定知识库中单段文本长度
+CHUNK_SIZE = 500
+# 指定知识库中相邻文本重合长度
+OVERLAP_SIZE = 50
+
+# 加载环境变量
+_ = load_dotenv(find_dotenv())
+
+# 读取文档
+script_dir = Path(__file__).parent
+file_path = script_dir / ".." / ".." / "data_base" / "knowledge_db" / "pumpkin_book.pdf"
+loaders_chinese = [
+    PyMuPDFLoader(file_path)
+    # 还可以加载其他文档
+]
+docs = []
+for loader in loaders_chinese:
+    docs.extend(loader.load())
+
+# 切分文档
+# 使用递归字符文本分割器
+text_spliter = RecursiveCharacterTextSplitter(
+    chunk_size=CHUNK_SIZE, chunk_overlap=OVERLAP_SIZE
+)
+split_docs = text_spliter.split_documents(docs)
+
+# 定义 embedding
+embedding = DashScopeEmbeddings(
+    model="text-embedding-v4", dashscope_api_key=os.getenv("DASHSCOPE_API_KEY")
+)
+```
+
 ### 构建 Chroma 向量库
+
+上面介绍了文档加载、文档切分的操作，后面将介绍如何将文档进行 embedding，并存入 chroma 向量数据库。
+
+```py
+# 构建向量数据库
+persist_directory = "../../data_base/knowledge_db/chroma"
+vector_store = Chroma(
+    embedding_function=embedding,
+    persist_directory=persist_directory,  # 允许我们将 persis_directory 目录保存到磁盘上
+)
+
+vector_store.add_documents(documents=split_docs[0:100])
+```
 
 ### 通过向量数据库检索
 
 #### 相似度检索
 
+```py
+question = "什么是机器学习"
+
+sim_docs = vector_store.similarity_search(question, k=3)
+print(f"检索到的内容数：{len(sim_docs)}")
+
+for i, sim_doc in enumerate(sim_docs):
+    print(
+        f"检索到的地{i}个内容：\n{sim_doc.page_content[:200]}",
+        end="\n-------------------------\n",
+    )
+```
+
 #### MMR检索
+
+如果只考虑检索出内容的相关性会导致内容过于单一，可能丢失重要信息。
+
+最大边际相关性 (MMR, Maximum marginal relevance) 可以帮助我们在保持相关性的同时，增加内容的丰富度。
+
+核心思想是在已经选择了一个相关性高的文档之后，再选择一个与已选文档相关性较低但是信息丰富的文档。这样可以在保持相关性的同时，增加内容的多样性，避免过于单一的结果。
+
+``` py
+
+```
 
 ### 构造检索式问答链
 
