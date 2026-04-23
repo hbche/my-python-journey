@@ -1,5 +1,6 @@
-import operator
+from typing import Any, Sequence, Tuple
 
+import operator
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -18,11 +19,11 @@ def create_data_set() -> tuple[np.ndarray, list[str]]:
 
 
 def classifyKNN(
-    input_vector: list[float],
+    input_vector: np.ndarray,
     dataset: np.ndarray,
-    labels: list[str],
+    labels: np.ndarray | Sequence[Any],
     k: int = 3,
-) -> tuple[str, int]:
+) -> Tuple[Any, int]:
     """使用 KNN 算法对输入向量进行分类。
 
     计算输入向量与数据集中每个样本的欧氏距离，
@@ -52,15 +53,15 @@ def classifyKNN(
     sorted_label_count = sorted(
         label_count.items(), key=operator.itemgetter(1), reverse=True
     )
-    return sorted_label_count[0][0]
+    return sorted_label_count[0]
 
 
-def file_to_matrix(filename):
-    file_reader = open(filename, encoding="utf-8")
-    file_lines = file_reader.readlines()
+def file_to_matrix(filename: str) -> tuple[np.ndarray, np.ndarray]:
+    with open(filename, encoding="utf-8") as file_reader:
+        file_lines = file_reader.readlines()
     line_total = len(file_lines)
-    data_set = np.zeros((line_total, 3))
-    label_set = np.zeros((line_total,))
+    data_set = np.zeros((line_total, 3), dtype=float)
+    label_set = np.zeros((line_total,), dtype=int)
     for index in range(line_total):
         line = file_lines[index]
         line = line.strip()

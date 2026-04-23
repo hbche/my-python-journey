@@ -1,6 +1,6 @@
 # 第 2 章 K 近邻算法
 
-## 2.1 K近邻算法概述
+## 2.1 K 近邻算法概述
 
 定义：K-近邻采用特征值之间的距离方法进行分类。
 
@@ -10,7 +10,7 @@
 
 适用数据范围：数值型和标称型
 
-### 2.1.1 准备：使用Python导入数据
+### 2.1.1 准备：使用 Python 导入数据
 
 ```py
 import numpy as np
@@ -30,15 +30,15 @@ print(f"Group: {group}")
 print(f"Labels: {labels}")
 ```
 
-### 2.1.2 实施KNN算法
+### 2.1.2 实施 KNN 算法
 
 对未知类别属性的数据集中的每个点依次执行以下操作：
 
 1. 计算已知类别数据集中的点与当前点之间的距离
 2. 按照距离递增次序排序
-3. 选区与当前点距离最小的k个点
-4. 确定前k个点所在类别的出现评率
-5. 返回前k个点出现评率最高的列表作为当前点的预测分类
+3. 选区与当前点距离最小的 k 个点
+4. 确定前 k 个点所在类别的出现评率
+5. 返回前 k 个点出现评率最高的列表作为当前点的预测分类
 
 ```py
 def classifyKNN(
@@ -85,13 +85,13 @@ def classifyKNN(
 
 为了测试分类器的效果，我们可以准备一些已知答案的数据，但是答案不能告诉分类器，检验分类器给出的结果是否符合预期结果。通过大量的测试数据，我们可以得到分类器的错误率——分类器给出错误结果的次数除以测试执行的总数。
 
-## 2.2 示例：使用k-近邻算法改进约会网站的配对效果
+## 2.2 示例：使用 k-近邻算法改进约会网站的配对效果
 
 流程：
 
 1. 收集数据：提供文本文件
 2. 准备数据：使用 Python 解析文本文件
-3. 分析数据：使用matplotlib画二维扩散图
+3. 分析数据：使用 matplotlib 画二维扩散图
 4. 训练算法：k-近邻算法没有此步骤
 5. 测试算法：使用数据集的部分数据作为训练数据，使用数据集的部分数据作为测试数据
 6. 使用算法：产生简单的命令行程序
@@ -221,5 +221,77 @@ def dating_class_test():
 
 使用 k-近邻 算法实现手写数字识别系统步骤：
 
-1. 收集数据
-2.
+1. 收集数据：提供文本文件
+2. 准备数据
+3. 分析数据
+4. 训练算法：此步骤不适用于 k-近邻算法
+5. 测试算法
+6. 使用算法
+
+### 2.3.1 准备数据；将图像转换为测试向量
+
+```py
+from typing import Any
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+def plot_number(number_matrix: np.ndarray) -> None:
+    """显示单个数字图像。
+
+    Args:
+        number_matrix: 32x32 二值图像矩阵。
+    """
+    plt.imshow(number_matrix, cmap='binary')
+    plt.show()
+
+def image_to_vector(filename: str) -> np.ndarray:
+    """将 32x32 文本数字图像转换为 1x1024 向量。
+
+    Args:
+        filename: 图像文件路径，文件内容为 32 行 32 列的 '0'/'1' 字符。
+
+    Returns:
+        1x1024 的 NumPy 向量。
+    """
+    image_vector = np.zeros((1, 1024), dtype=int)
+    with open(filename, 'r') as fr:
+        for i in range(32):
+            line_str = fr.readline().strip()
+            for j in range(32):
+                image_vector[0, 32 * i + j] = int(line_str[j])
+    return image_vector
+
+if __name__ == '__main__':
+    number_vector = image_to_vector('digits/trainingDigits/0_13.txt')
+    plot_number(number_vector.reshape((32, 32)))
+```
+
+### 2.3.2 测试算法：使用 k-近邻算法识别手写数字
+
+```py
+def handle_writing_number_classifier():
+    label_set = []
+    training_file_list = listdir('digits/trainingDigits')
+    data_size = len(training_file_list)
+    data_set = np.zeros((data_size, 1024))
+    for i in range(data_size):
+        file_name_str = training_file_list[i]
+        number_label = int(file_name_str.split('.')[0].split('_')[0])
+        label_set.append(number_label)
+        data_set[i, :] = image_to_vector(f'digits/trainingDigits/{file_name_str}')
+
+    test_file_list = listdir('digits/testDigits')
+    errorCount = 0.0
+    test_data_size = len(test_file_list)
+    for i in range(test_data_size):
+        file_name_str = test_file_list[i]
+        test_label = int(file_name_str.split('.')[0].split('_')[0])
+        test_vector = image_to_vector(f'digits/testDigits/{file_name_str}')
+        test_target = classifyKNN(test_vector, data_set, label_set, 3)
+        print(f'The classifier came back with: {test_target}, the real answer is: {test_label}')
+        if test_target != test_label:
+            errorCount += 1.0
+    print(f"\nThe total number of errors is: {errorCount}")
+    print(f"\nThe total error rate is: {errorCount/float(test_data_size)}")
+```
