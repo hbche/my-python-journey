@@ -1,10 +1,14 @@
 # 机器学习
 
 ## 阅读笔记
+### [机器学习实战](./machine-learning-in-action/README.md)
 
-### [机器学习实战：基于Scikit-Learn、Keras和TensorFlow（原书第3版）](./ML-in-action/README.md)
+### [用Python动手学机器学习](./hands-on-machine-learning-with-python/README.md)
+
+### [机器学习实战：基于Scikit-Learn、Keras和TensorFlow（原书第3版）](./hands-on-machine-learning-with-Scikit-Learn&Keras&TensorFlow/README.md)
 
 ### [Google 机器学习](./google-ml)
+
 
 ## 资源
 
