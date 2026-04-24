@@ -38,21 +38,21 @@
 
 #### Web 开发
 
-1. 《Flask Web 开发实践：入门、进阶与原理解析》 豆瓣 9.1
-2. 《Flask Web 开发：基于 Python 的 web 应用开发实战（第 2 版）》 豆瓣 8.6
-3. 《Django 企业开发实战：高效 Python Web 框架指南》
+- [ ] 《Flask Web 开发实践：入门、进阶与原理解析》 豆瓣 9.1
+- [ ] 《Flask Web 开发：基于 Python 的 web 应用开发实战（第 2 版）》 豆瓣 8.6
+- [ ] 《Django 企业开发实战：高效 Python Web 框架指南》
 
 #### 数据分析
 
-1. 《Excel+Python 办公》
-2. 《Python 数据分析基础》
-3. 《Python 数据分析：活用 Pandas 库》
-4. 《Python 数据分析基础教程：NumPy 学习指南（第 2 版）》
+- [ ] 《Excel+Python 办公》
+- [ ] 《Python 数据分析基础》
+- [ ] 《Python 数据分析：活用 Pandas 库》
+- [ ] 《Python 数据分析基础教程：NumPy 学习指南（第 2 版）》
 
 #### 数据科学
 
-1. 《数据科学入门（第 2 版）》
-2. 《Python 数据科学手册》
+- [ ] 《数据科学入门（第 2 版）》
+- [ ] 《Python 数据科学手册》
 
 #### 网络编程
 

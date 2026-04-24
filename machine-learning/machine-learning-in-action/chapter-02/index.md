@@ -295,3 +295,9 @@ def handle_writing_number_classifier():
     print(f"\nThe total number of errors is: {errorCount}")
     print(f"\nThe total error rate is: {errorCount/float(test_data_size)}")
 ```
+
+## 2.4 本章小结
+
+k-近邻算法是分类数据最简单有效的方法，k-近邻算法是基于实例的学习，使用算法时我们必须有接近实际数据的训练样本数据。k-近邻算法必须保存全部数据集，如果训练数据集很大，必须使用大量的存储空间。此外，由于必须对数据集中的每个数据计算距离，实际使用时可能非常耗时。
+
+k-近邻算法的另一个缺陷是它无法给出任何数据的基础结构信息，因此我们也将无法知晓平均实例样本和典型实例样本具有什么特征。
