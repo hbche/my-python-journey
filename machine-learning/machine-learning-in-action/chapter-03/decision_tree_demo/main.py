@@ -1,5 +1,8 @@
 # from information_entropy import information_entropy
-from split_data_set import split_data_set
+# from split_data_set import split_data_set
+# from calculate_best_feature_split import calculate_best_feature_split
+# from major_count import major_count
+from create_tree import create_decision_tree
 
 def create_data_set():
     data_set = [
@@ -15,7 +18,6 @@ def create_data_set():
 
 if __name__ == "__main__":
     data_set, label_set = create_data_set()
-    result = split_data_set(data_set, 0, 1)
+    result = create_decision_tree(data_set, label_set)
     print(result)
-    result = split_data_set(data_set, 0, 0)
-    print(result)
+    # {'no surfacing': {0: 'no', 1: {'flippers': {0: 'no', 1: 'yes'}}}}
