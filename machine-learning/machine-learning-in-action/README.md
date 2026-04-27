@@ -53,3 +53,6 @@
 ## 读书心得
 
 ## 配套资源
+
+[machinelearninginaction3x
+](https://github.com/pbharrin/machinelearninginaction3x)

@@ -253,6 +253,8 @@ def calculate_best_feature_split(data_set):
     return best_feature_index
 ```
 
+在调用函数中调用参数需要满足一定的要求：第一个要求是，数据必须是一种由列表元素组成的列表，而且所有列表元素都要具有相同的数据长度；第二个要求是，数据的最后一列或者每个实例的最后一个元素是当前实例的类别标签。数据集一旦满足上述要求，我们就可以在函数的第一行判定当前数据集包含多少个特征属性。
+
 测试：
 
 ```py
@@ -283,9 +285,9 @@ if __name__ == "__main__":
 ```py
 import operator
 
-def major_count(class_list):
+def majority_count(class_list):
     """
-    major_count: 计算分类占比最高的分类
+    majority_count: 计算分类占比最高的分类
 
     :param class_list: 分类列表
     """
@@ -300,7 +302,7 @@ def major_count(class_list):
 
 前面我们已经构建了“单层”最佳特征计算过程，对于当前最佳特征分类的子集如果还存在多个标签，说明子集也需要按照相同的思路进行特征最优分类计算。
 
-以下采用递归的思路实现完整的策略树算法。
+以下采用递归的思路实现完整的决策树算法。
 
 ```py
 def create_decision_tree(data_set, labels):
@@ -310,7 +312,7 @@ def create_decision_tree(data_set, labels):
         return class_list[0]
     # 如果当前只剩标签数据，则取标签占比最高的最为分类标签
     if len(data_set[0]) == 1:
-        return major_count(class_list)
+        return majority_count(class_list)
     # 接下来以递归思想计算每个分支的分类，直到分类完为止
     best_feature_index = calculate_best_feature_to_split(data_set)
     feature_label = labels[best_feature_index]
@@ -327,7 +329,13 @@ def create_decision_tree(data_set, labels):
     return classify_tree
 ```
 
-测试上述测试集：
+上述构建树函数包含两个参数：数据集和标签列表。标签列表包含数据集中所有特征的标签，算法本身不需要这个变量，但是为了给出数据明确的含义，我们将它作为一个输入参数提供。此外，前面提到的对数据集的要求这里依然要满足。上述代码首先创建了名为 class_list 的列表变量，其中包含了数据集所有类标签。递归函数的第一个停止条件是所有的类标签完全相同，则直接返回该标签。递归的第二个终止条件是使用完了所有特征，仍然不能将数据集划分成仅包含唯一类别的分组。由于第二个条件无法简单地返回唯一的类标签，这里使用前面介绍的 majority_count 函数挑选出现次数最多的类别作为返回值。
+
+下一步程序开始构建树，这里使用字典类型保存树的信息。字典变量 classify_tree 存储了树的所有信息，这对于其后绘制树形图非常重要。当前数据集选取的最好特征存储在变量 best_feature_index 中，得到列表包含的所有属性值。然后再根据当前数据源、最佳特征索引、特征值进行子数据集划分，再将子数据集进行树构建。
+
+最后代码遍历当前选择特征包含的所有属性值，在每个数据集划分上递归调用函数 create_decision_tree ，得到的返回值将被插入到字典变量 classify_tree 中，因此函数终止执行时，字典中将会嵌套很多代表叶子节点信息的字典数据。
+
+现在我们可以测试上面代码的实际输出结果：
 
 ```py
 if __name__ == '__main__':
@@ -335,4 +343,135 @@ if __name__ == '__main__':
     print(create_decision_tree(data_set, labels))   # {'no surfacing': {0: 'no', 1: {'flippers': {0: 'no', 1: 'yes'}}}}
 ```
 
+如果值是类标签，则该子节点是叶子节点；如果值是另一个数据字典，则子节点是一个判断节点，这种结构不断重复就构成了整棵树。
+
 ## 3.2 使用 Matplotlib 绘制树形图
+
+使用 Matplotlib 绘制树形图
+
+### 3.2.1 Matplotlib 注释
+
+Matplotlib 提供了一个非常有用的注释工具 annotations，它可以在数据图形上添加文本注释。注释通常用于解释数据的内容。由于数据上面直接存在文本描述会非常丑陋，因此工具内嵌支持带箭头的划线工具。
+
+```py
+import matplotlib.pyplot as plt
+
+decision_node = dict(boxstyle='sawtooth', fc='0.8')
+leaf_node = dict(boxstyle='round4', fc='0.8')
+arrow_args = dict(arrowstyle='<-')
+
+def create_plot():
+    fig = plt.figure(1, facecolor='white')
+    # 设置中文字体，防止中文乱码
+    # Windows 系统使用 'SimHei'（黑体），macOS 使用 'Arial Unicode MS'
+    plt.rcParams['font.sans-serif'] = ['SimHei']  # 正常显示中文
+    plt.rcParams['axes.unicode_minus'] = False   # 正常显示负号
+    fig.clf()
+    create_plot.ax1 = plt.subplot(111, frameon=False)
+    plot_node('决策节点', (0.5, 0.1), (0.1, 0.5), decision_node)
+    plot_node('叶节点', (0.8, 0.1), (0.3, 0.8), leaf_node)
+    plt.show()
+
+def plot_node(node_text, center_pt, parent_pt, node_type):
+    create_plot.ax1.annotate(node_text, xy=parent_pt, xycoords='axes fraction',
+                            xytext=center_pt, textcoords='axes fraction',
+                            va='center', ha='center',
+                            bbox=node_type, arrowprops=arrow_args)
+```
+
+TODO
+
+## 3.3 测试和存储分类器
+
+### 3.3.1 测试算法：使用决策树执行分类
+
+```py
+if __name__ == "__main__":
+    data_set, label_set = create_data_set()
+    decision_tree = create_decision_tree(data_set, label_set[:])
+    print(decision_tree)
+    # {'no surfacing': {0: 'no', 1: {'flippers': {0: 'no', 1: 'yes'}}}}
+    classify_result = classify(decision_tree, label_set[:], [1, 0])
+    print(classify_result)  # no
+    classify_result = classify(decision_tree, label_set[:], [1, 1])
+    print(classify_result)  # yes
+```
+
+### 3.3.2 使用算法：决策树的存储
+
+构造决策树是很耗时的任务，即使处理很小的数据集，我们可以将训练的决策树对象进行序列化转储，在使用的使用进行反序列化加载，这样就不用每次都计算决策树。
+
+```py
+import pickle
+
+def store_decision_tree(decision_tree, filename):
+    with open(filename, "wb") as fw:
+        pickle.dump(decision_tree, fw)
+
+
+def grab_decision_tree(filename):
+    with open(filename, "rb") as fr:
+        return pickle.load(fr)
+```
+
+测试：
+
+```py
+if __name__ == "__main__":
+    data_set, label_set = create_data_set()
+    if Path("decision_tree.pkl").exists():
+        # 如果存在转储文件，直接解析
+        decision_tree = grab_decision_tree("decision_tree.pkl")
+    else:
+        # 如果不存在则计算并转储，方便下次使用
+        decision_tree = create_decision_tree(data_set, label_set[:])
+        store_decision_tree(decision_tree, "decision_tree.pkl")
+    print(decision_tree)
+    # {'no surfacing': {0: 'no', 1: {'flippers': {0: 'no', 1: 'yes'}}}}
+    classify_result = classify(decision_tree, label_set[:], [1, 0])
+    print(classify_result)  # no
+    classify_result = classify(decision_tree, label_set[:], [1, 1])
+    print(classify_result)  # yes
+```
+
+通过上述方法我们可以将分类器存储在硬盘上，而不用每次对数据分类时重新学习一遍，这也是决策树的优点之一。k-近邻算法就无法持久化分类器。
+
+## 3.4 示例：使用决策树预测隐形眼镜的种类
+
+步骤：
+
+1. 收集数据
+2. 准备数据
+3. 分析数据
+4. 训练算法
+5. 测试算法
+6. 使用算法
+
+```py
+def get_lenses_data_set():
+    data_set = []
+    labels = ["age", "prescript", "astigmatic", "tearRate"]
+    with open("lenses.txt") as fr:
+        for line in fr.readlines():
+            line = line.strip().split("\t")
+            data_set.append(line)
+    return data_set, labels
+
+
+if __name__ == "__main__":
+    # 示例：预测隐形眼镜类型
+    data_set, labels = get_lenses_data_set()
+    print(data_set, labels)
+    decision_tree = create_decision_tree(data_set, labels)
+    print(decision_tree)
+```
+
+本章使用的是ID3算法实现的决策树，存在过度匹配的问题。后面为了减少过度匹配问题，我们采用剪裁决策树，去掉一些不必要的叶子节点。如果叶子节点只能增加少许信息，则可以删除该节点，将其并入到其他叶子节点中。
+
+后面将学习 CART 算法构造决策树。ID3算法无法直接处理除执行数据，尽管我们可以将数值型数据转换为标称型数据，但是如果存在太多的特征划分，ID3算法仍然会面临其他问题。
+
+## 3.5 本章小结
+
+决策树分类器就像带有终止块的流程图，终止块表示分类结果。开始处理数据集时，我们首先需要测量集合中数据的不一致性（信息熵，越高越混乱），也就是熵，然后寻找最优方案划分数据集，直到数据集中的所有数据属于同一分类。ID3算法可以用于划分标称型数据。构建决策树时，我们通常采用递归方法将数据集转化为决策树。
+
+还有其他的决策树构造算法，最流行的是C4.5和CART。

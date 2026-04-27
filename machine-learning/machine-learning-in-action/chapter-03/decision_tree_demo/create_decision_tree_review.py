@@ -1,10 +1,13 @@
+# 复习策略树算法核心
+
 import math
 import operator
+
 
 def info_entropy(data_set):
     """
     info_entropy: 计算熵值
-    
+
     :param data_set: 数据集，每一项索引最后一个为数据的标签，其余列为特征
     """
     # 记录每个标签的统计数
@@ -27,7 +30,7 @@ def info_entropy(data_set):
 def split_data_by_feature(data_set, axis, value):
     """
     split_data_by_feature: 根据给定特征及特征值对数据集进行拆分
-    
+
     :param data_set: 说明
     :param axis: 说明
     :param value: 说明
@@ -35,7 +38,7 @@ def split_data_by_feature(data_set, axis, value):
     sub_data_set = []
     for item in data_set:
         if item[axis] == value:
-            sub_data_set.append(item[:axis] + item[axis+1:])
+            sub_data_set.append(item[:axis] + item[axis + 1 :])
 
     return sub_data_set
 
@@ -43,7 +46,7 @@ def split_data_by_feature(data_set, axis, value):
 def calculate_best_feature(data_set):
     """
     calculate_best_feature_to_split: 遍历每个特征，分别计算每个特征分类对应的信息增益，找到最高增益对应的特征索引，其对应最佳分类对应的标签索引
-    
+
     :param data_set: 数据集
     """
     # 原始数据的信息熵，作为计算信息增益的基准
@@ -70,7 +73,9 @@ def calculate_best_feature(data_set):
         feature_value_set = set([item[feature_index] for item in data_set])
         for feature_value in feature_value_set:
             feature_probability = float(feature_count_map[feature_value] / data_size)
-            feature_info_entropy += feature_probability * info_entropy(split_data_by_feature(data_set, feature_index, feature_value))
+            feature_info_entropy += feature_probability * info_entropy(
+                split_data_by_feature(data_set, feature_index, feature_value)
+            )
 
         # 计算当前特征的信息增益
         info_gain = base_info_entropy - feature_info_entropy
@@ -79,12 +84,12 @@ def calculate_best_feature(data_set):
             best_info_gain = info_gain
 
         return best_feature_index
-    
+
 
 def label_count(class_list):
     """
     label_count: 当只有一个特征时，取标签概率最高的作为分类标签
-    
+
     :param class_list: 说明
     """
     class_count_map = {}
@@ -92,13 +97,16 @@ def label_count(class_list):
         if item not in class_count_map:
             class_count_map[item] = 0
         class_count_map[item] += 1
-    class_sort_list = sorted(class_count_map.items(), key=operator.itemgetter(1), reverse=True)
+    class_sort_list = sorted(
+        class_count_map.items(), key=operator.itemgetter(1), reverse=True
+    )
     return class_sort_list[0][0]
+
 
 def create_decision_tree(data_set, labels):
     """
     create_decision_tree: 使用递归思想构建决策树进行数据分类
-    
+
     :param data_set: 原始数据集
     :param labels: 每个特征对应标签
     """
@@ -116,21 +124,28 @@ def create_decision_tree(data_set, labels):
     best_feature_value_set = set([item[best_feature] for item in data_set])
     for best_feature_value in best_feature_value_set:
         sub_labels = labels[:]
-        classify_tree[best_label][best_feature_value] = create_decision_tree(split_data_by_feature(data_set, best_feature, best_feature_value), sub_labels)
+        classify_tree[best_label][best_feature_value] = create_decision_tree(
+            split_data_by_feature(data_set, best_feature, best_feature_value),
+            sub_labels,
+        )
 
     return classify_tree
 
+
 def create_data_set():
     data_set = [
-        [1, 1, 'yes'],
-        [1, 1, 'yes'],
-        [1, 0, 'no'],
-        [0, 1, 'no'],
-        [0, 1, 'no'],
+        [1, 1, "yes"],
+        [1, 1, "yes"],
+        [1, 0, "no"],
+        [0, 1, "no"],
+        [0, 1, "no"],
     ]
-    labels = ['no surfacing', 'flippers']
+    labels = ["no surfacing", "flippers"]
     return data_set, labels
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     data_set, labels = create_data_set()
-    print(create_decision_tree(data_set, labels))   # {'no surfacing': {0: 'no', 1: {'flippers': {0: 'no', 1: 'yes'}}}}
+    print(
+        create_decision_tree(data_set, labels)
+    )  # {'no surfacing': {0: 'no', 1: {'flippers': {0: 'no', 1: 'yes'}}}}
