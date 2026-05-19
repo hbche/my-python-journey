@@ -13,3 +13,4 @@
 | llm-cookbook | https://github.com/datawhalechina/llm-cookbook |
 | llm-action | https://github.com/liguodongiot/llm-action |
 | minimind | https://github.com/jingyaogong/minimind |
+| awesome-agentic-ai | https://github.com/WenyuChiou/awesome-agentic-ai-zh |
