@@ -6,3 +6,8 @@
 
 1. [agent-skills-with-anthropic](./agent-skills-with-anthropic.md)
 2. [agent skills](./agent-skills/index.md)
+
+
+## 资源
+
+[课程地址](https://github.com/datawhalechina/agent-skills-with-anthropic)
