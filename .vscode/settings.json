@@ -1,37 +1,70 @@
 {
+  // ============================================
   // 编辑器基础设置
+  // ============================================
   "editor.wordWrap": "wordWrapColumn",
   "editor.wordWrapColumn": 80,
   "editor.formatOnSave": true,
+  "editor.rulers": [80, 120],
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.trimAutoWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
 
-  // Markdown设置
-  // 3. 针对 Markdown 文件的专项设置
+  // ============================================
+  // Markdown
+  // ============================================
   "[markdown]": {
-    // 指定 Markdown All in One 为默认格式化器
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    // 开启保存时自动格式化
     "editor.formatOnSave": true,
-    // 建议配合：在编辑器内也开启 120 字符换行显示，保持视觉一致
     "editor.wordWrap": "wordWrapColumn",
     "editor.wordWrapColumn": 80
   },
 
-  // Prettier设置
-  "prettier.printWidth": 80,
-
-  // Python代码设置
-  // 设置 Python 文件的默认格式化器
+  // ============================================
+  // Python (Ruff)
+  // ============================================
   "[python]": {
-    // 如果你用的是 Ruff (推荐)
     "editor.defaultFormatter": "charliermarsh.ruff",
-
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-      // 保存时自动修复错误并组织 import 语句
       "source.fixAll.ruff": "always",
       "source.organizeImports.ruff": "always"
     },
     "editor.rulers": [120],
     "editor.guides.bracketPairs": true
-  }
+  },
+
+  // ============================================
+  // JSON / JSONC
+  // ============================================
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+
+  // ============================================
+  // YAML
+  // ============================================
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+
+  // ============================================
+  // Prettier 通用配置
+  // ============================================
+  "prettier.printWidth": 80,
+  "prettier.tabWidth": 2,
+  "prettier.singleQuote": false,
+  "prettier.trailingComma": "all",
+  "prettier.endOfLine": "lf"
 }

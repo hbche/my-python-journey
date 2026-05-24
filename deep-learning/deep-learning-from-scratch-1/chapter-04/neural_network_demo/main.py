@@ -58,7 +58,9 @@ def get_data_set():
     )
     train_size = x_train.shape[0]
     batch_size = 10
+    # 从训练数据中随机选择 10 个数据，生成这 10 个数据对应的索引列表
     batch_mask = np.random.choice(train_size, batch_size)
+    # 根据随机索引列表生成训练数据和训练标签数据
     x_batch = x_train[batch_mask]
     t_batch = t_train[batch_mask]
     print(x_batch.shape)  # (10, 784)
