@@ -98,7 +98,7 @@ def cross_entropy_error(y, t):
     return -np.sum(t * np.log(y + delta))
 ```
 
-这里，参数 $y$ 和 $t$ 都是 NumPy 数组。函数内部在计算 $np.log$时，加上了一个微小值 delta 。这是因为，如果神经网络对应的输出 $y_k$ 为0时，即当出现$np.log(0)$时，$np.log(0)$会变成一个负无限大的 $-inf$，这样以来，就会导致后续计算无法进行。作为保护性对策，添加一个微小值可以防止负无限大的发生。下面，我们使用 cross_entropy_error(y, t) 进行一些简单的计算。
+这里，参数 $y$ 和 $t$ 都是 NumPy 数组。函数内部在计算 $np.log$时，加上了一个微小值 delta 。这是因为，如果神经网络对应的输出 $y_k$ 为 0 时，即当出现$np.log(0)$时，$np.log(0)$会变成一个负无限大的 $-inf$，这样以来，就会导致后续计算无法进行。作为保护性对策，添加一个微小值可以防止负无限大的发生。下面，我们使用 cross_entropy_error(y, t) 进行一些简单的计算。
 
 ```py
 if __name__ == "__main__":
@@ -218,9 +218,9 @@ def cross_entropy_error(y, t):
 
 假设某个神经网络正确识别出了 100 笔训练数据中的 32 笔，此时识别精度为 32%。如果以识别精度为指标，即使稍微改变权重参数的值，识别精度也仍将保持在 32%，不会出现变化。也就是说，仅仅微调参数，是无法改善识别精度的。即便识别精度有所改善，它的值也不会像 32.0123...% 这样连续变化，而是变为 33%、34%这样的不连续的、离散的值。而如果把损失函数作为指标，则当前损失函数的值可以表示为 0.92543...这样的值。并且，如果稍微改变一下参数的值，对应的损失函数也像 0.93432...这样发生连续性的变化。
 
-识别精度对微小的参数变化基本上没有什么反应，即便有反应，它的值也是不连续地、突然地变化。作为激活函数的阶跃函数也有同样的情况。出于相同的原因，如果使用阶跃函数作为激活函数，神经网络的学习将无法进行。阶跃函数的导数在绝大多数地方（除了0以外的地方）均为0。也就是说，如果使员工了阶跃函数，那么即便将损失函数作为指标，参数的微小变化也会被阶跃函数抹杀，导致损失函数的值不会产生任何变化。
+识别精度对微小的参数变化基本上没有什么反应，即便有反应，它的值也是不连续地、突然地变化。作为激活函数的阶跃函数也有同样的情况。出于相同的原因，如果使用阶跃函数作为激活函数，神经网络的学习将无法进行。阶跃函数的导数在绝大多数地方（除了 0 以外的地方）均为 0。也就是说，如果使员工了阶跃函数，那么即便将损失函数作为指标，参数的微小变化也会被阶跃函数抹杀，导致损失函数的值不会产生任何变化。
 
-阶跃函数就像“竹筒敲石”一样，只在某个瞬间产生变化。而sigmoid函数，不仅函数的输出是连续变化的，曲线的斜率（导数）也是连续变化的。也就是说，sigmoid函数的导数在任何地方都不为0。这对神经网络的学习非常重要。得益于这个斜率不会为0的性质，神经网络的学习得以正确进行。
+阶跃函数就像“竹筒敲石”一样，只在某个瞬间产生变化。而 sigmoid 函数，不仅函数的输出是连续变化的，曲线的斜率（导数）也是连续变化的。也就是说，sigmoid 函数的导数在任何地方都不为 0。这对神经网络的学习非常重要。得益于这个斜率不会为 0 的性质，神经网络的学习得以正确进行。
 
 ## 4.3 数值微分
 
@@ -234,9 +234,9 @@ $$
 \frac{df(x)}{dx} = \lim_{h->0}\frac{f(x+h)-f(x)}{h}
 $$
 
-式（4.4）表示的是函数的导数。表示的导数的含义是，x的“微小变化”将导致函数f(x)的值在多大程度上发生变化。其中，表示微小变化的h无限趋近0，表示为$\lim_{h->0}$。
+式（4.4）表示的是函数的导数。表示的导数的含义是，x 的“微小变化”将导致函数 f(x)的值在多大程度上发生变化。其中，表示微小变化的 h 无限趋近 0，表示为$\lim_{h->0}$。
 
-接下来，我们参考式（4.4），来实现求函数的导数的程序。如果直接实现式（4.4）的话，向h中赋入一个微小值，就可以计算出来了。
+接下来，我们参考式（4.4），来实现求函数的导数的程序。如果直接实现式（4.4）的话，向 h 中赋入一个微小值，就可以计算出来了。
 
 ```py
 def numerical_diff(f, x):
@@ -246,17 +246,17 @@ def numerical_diff(f, x):
 
 乍一看这个实现没有问题，但是实际上这段代码有两处需要改进的地方。
 
-在上面的实现中，因为想把尽可能小的值赋给h（可以的话，想让h无限趋近0），所以h使用了10e-50这个微小值。但是，这样反而产生了舍入误差。所谓舍入误差，是指因为省略小数的精细部分的数值而造成最终的计算结果上的误差。比如，在Python中，舍入误差如下所示：
+在上面的实现中，因为想把尽可能小的值赋给 h（可以的话，想让 h 无限趋近 0），所以 h 使用了 10e-50 这个微小值。但是，这样反而产生了舍入误差。所谓舍入误差，是指因为省略小数的精细部分的数值而造成最终的计算结果上的误差。比如，在 Python 中，舍入误差如下所示：
 
 ```py
 print(np.float32(10e-50))   # 0.0
 ```
 
-如上所示，如果用 float32 类型（32位的浮点数）来表示 10e-50 ，就会变成0.0，无法正确表示出来。也就是说，使用过小的值会造成计算机出现计算上的问题。这是第一个需要改进的地方，即将微小值h改为 $10^{-4}$。使用 $10^{-4}$ 即可计算正确的结果。
+如上所示，如果用 float32 类型（32 位的浮点数）来表示 10e-50 ，就会变成 0.0，无法正确表示出来。也就是说，使用过小的值会造成计算机出现计算上的问题。这是第一个需要改进的地方，即将微小值 h 改为 $10^{-4}$。使用 $10^{-4}$ 即可计算正确的结果。
 
-第二个需要改进的地方与函数f的差分有关。虽然上述实现中计算了函数f在x+h和x之间的差分，但是必须注意到，这个计算从一开始就有误差。“真的导数”对应函数在x处的斜率（称为切线）​，但上述实现中计算的导数对应的是(x+h)和x之间的斜率。因此，真的导数（真的切线）和上述实现中得到的导数的值在严格意义上并不一致。这个差异的出现是因为h不可能无限接近0。
+第二个需要改进的地方与函数 f 的差分有关。虽然上述实现中计算了函数 f 在 x+h 和 x 之间的差分，但是必须注意到，这个计算从一开始就有误差。“真的导数”对应函数在 x 处的斜率（称为切线）​，但上述实现中计算的导数对应的是(x+h)和 x 之间的斜率。因此，真的导数（真的切线）和上述实现中得到的导数的值在严格意义上并不一致。这个差异的出现是因为 h 不可能无限接近 0。
 
-数值微分含有误差。为了减小这个误差，我们可以计算函数f在(x+h)和(x-h)之间的差分。因为这种计算方法以x为中心，计算它左右两边的差分，所以也称为**中心差分**（而(x+h)和x之间的差分称为**前向差分**）​。下面，我们基于上述两个要改进的点来实现数值微分（数值梯度）​。
+数值微分含有误差。为了减小这个误差，我们可以计算函数 f 在(x+h)和(x-h)之间的差分。因为这种计算方法以 x 为中心，计算它左右两边的差分，所以也称为**中心差分**（而(x+h)和 x 之间的差分称为**前向差分**）​。下面，我们基于上述两个要改进的点来实现数值微分（数值梯度）​。
 
 ```py
 def numerical_diff(f, x):
@@ -264,7 +264,7 @@ def numerical_diff(f, x):
     return (f(x + h) - f(x-h)) / (2 * h)
 ```
 
-> 利用微小的差分求导数的过程称为数值微分(numerical differentiation)。而基于数学式的推导求导数的过程，则用“解析性”(analytic)一词，称为“解析性求解”或者“解析性求导”​。比如，$y=x^2$的导数，可以通过$\frac{dy}{dx}=2x$解析性地求解出来。因此，当x= 2时，y的导数为4。解析性求导得到的导数是不含误差的“真的导数”​。
+> 利用微小的差分求导数的过程称为数值微分(numerical differentiation)。而基于数学式的推导求导数的过程，则用“解析性”(analytic)一词，称为“解析性求解”或者“解析性求导”​。比如，$y=x^2$的导数，可以通过$\frac{dy}{dx}=2x$解析性地求解出来。因此，当 x= 2 时，y 的导数为 4。解析性求导得到的导数是不含误差的“真的导数”​。
 
 ### 4.3.2 数值微分的例子
 
@@ -298,7 +298,7 @@ gradient_10 = numerical_diff(function_1, 10)
 print(gradient_10)  # 0.2999999999986347
 ```
 
-这里计算的导数是f(x)相对于x的变化量，对应函数的斜率。另外，$f(x)=0.01x^2+0.1x$的解析解是$\frac{dy}{dx}=0.02x+0.1$。因此，在x= 5和x= 10处，​“真的导数”分别为0.2和0.3。和上面的结果相比，我们发现虽然严格意义上它们并不一致，但误差非常小。实际上，误差小到基本上可以认为它们是相等的。
+这里计算的导数是 f(x)相对于 x 的变化量，对应函数的斜率。另外，$f(x)=0.01x^2+0.1x$的解析解是$\frac{dy}{dx}=0.02x+0.1$。因此，在 x= 5 和 x= 10 处，​“真的导数”分别为 0.2 和 0.3。和上面的结果相比，我们发现虽然严格意义上它们并不一致，但误差非常小。实际上，误差小到基本上可以认为它们是相等的。
 
 ### 4.3.3 偏导数
 
@@ -308,7 +308,7 @@ $$
 f(x_0, x_1)=x_0^2+x_1^2
 $$
 
-这个式子可以用Python表示如下：
+这个式子可以用 Python 表示如下：
 
 ```py
 def funciton_2(x):
@@ -320,7 +320,7 @@ def funciton_2(x):
 
 怎么求解偏导数呢？我们先试着解一下下面两个关于偏导数的问题。
 
-- 问题1：求$x_0=3,x_1=4$时，关于$x_0$的偏导数$\frac{\partial f}{\partial x_0}$
+- 问题 1：求$x_0=3,x_1=4$时，关于$x_0$的偏导数$\frac{\partial f}{\partial x_0}$
 
   ```py
   def funciton_tmp1(x0):
@@ -328,7 +328,7 @@ def funciton_2(x):
   print(numerical_diff(funciton_tmp1, 3.0))   # 6.00000000000378
   ```
 
-- 问题2：求$x_0=3,x_1=4$时，关于$x_0$的偏导数$\frac{\partial f}{\partial x_1}$
+- 问题 2：求$x_0=3,x_1=4$时，关于$x_0$的偏导数$\frac{\partial f}{\partial x_1}$
 
   ```py
   def function_tmp2(x1):
@@ -336,7 +336,7 @@ def funciton_2(x):
   print(numerical_diff(function_tmp2, 4.0))   # 7.999999999999119
   ```
 
-在这些问题中，我们定义了一个只有一个变量的函数，并对这个函数进行了求导。例如，问题1中，我们定义了一个固定 $x_1=4$ 的新函数，然后对只有变量 $x_0$ 的函数应用了求数值微分的函数。从上面的计算结果可知，问题1的答案是 6.00000000000378，问题2的答案是 7.999999999999119，和解析解的导数基本一致。
+在这些问题中，我们定义了一个只有一个变量的函数，并对这个函数进行了求导。例如，问题 1 中，我们定义了一个固定 $x_1=4$ 的新函数，然后对只有变量 $x_0$ 的函数应用了求数值微分的函数。从上面的计算结果可知，问题 1 的答案是 6.00000000000378，问题 2 的答案是 7.999999999999119，和解析解的导数基本一致。
 
 像这样，偏导数和单变量的导数一样，都是求某个地方的斜率。不过，偏导数需要将多个变量中的某一个变量定义为目标变量，并将其他变量固定为某个值。在上例的代码中，为了将目标变量以外的变量固定到某些特定的值上，我们定义了新函数。然后，对新定义的函数应用了之前的求数值微分的函数，得到偏导数。
 
@@ -345,7 +345,7 @@ def funciton_2(x):
 在刚才的例子中，我们按变量分别计算了 $x_0$ 和 $x_1$ 的偏导数。现在，我们希望一起计算 $x_0$ 和 $x_1$ 的偏导数。比如，我们来考虑求 $x_0=3, x_1=4$ 时 $(x_0, x_1)$ 的偏导数 $(\frac{\partial{f}}{\partial{x_0}}, \frac{\partial{f}}{\partial{x_1}})$。另外，像$(\frac{\partial{f}}{\partial{x_0}}, \frac{\partial{f}}{\partial{x_1}})$ 这样的由全部变量的偏导数汇总而成的向量称为**梯度**（gradient）。梯度可以像下面这样来实现：
 
 ```py
-def numberical_gradient(f, x):
+def numerical_gradient(f, x):
     """
     数值求梯度
     f: 目标函数
@@ -366,14 +366,14 @@ def numberical_gradient(f, x):
     return gradient_x
 ```
 
-函数numerical_gradient(f, x)的实现看上去有些复杂，但它执行的处理和求单变量的数值微分基本没有区别。需要补充说明一下的是，np.zeros_like(x)会生成一个形状和x相同、所有元素都为0的数组。
+函数 numerical_gradient(f, x)的实现看上去有些复杂，但它执行的处理和求单变量的数值微分基本没有区别。需要补充说明一下的是，np.zeros_like(x)会生成一个形状和 x 相同、所有元素都为 0 的数组。
 
-函数numerical_gradient(f, x)中，参数f为函数，x为NumPy数组，该函数对NumPy数组x的各个元素求数值微分。现在，我们用这个函数实际计算一下梯度。这里我们求点(3, 4)、(0, 2)、(3, 0)处的梯度。
+函数 numerical_gradient(f, x)中，参数 f 为函数，x 为 NumPy 数组，该函数对 NumPy 数组 x 的各个元素求数值微分。现在，我们用这个函数实际计算一下梯度。这里我们求点(3, 4)、(0, 2)、(3, 0)处的梯度。
 
 ```py
-print(numberical_gradient(function_2, np.array([3.0, 4.0])))    # [6. 8.]
-print(numberical_gradient(function_2, np.array([0.0, 2.0])))    # [0. 4.]
-print(numberical_gradient(function_2, np.array([3.0, 0.0])))    # [6. 0.]
+print(numerical_gradient(function_2, np.array([3.0, 4.0])))    # [6. 8.]
+print(numerical_gradient(function_2, np.array([0.0, 2.0])))    # [0. 4.]
+print(numerical_gradient(function_2, np.array([3.0, 0.0])))    # [6. 0.]
 ```
 
 ### 4.4.1 梯度法
@@ -382,7 +382,7 @@ print(numberical_gradient(function_2, np.array([3.0, 0.0])))    # [6. 0.]
 
 这里需要注意的是，梯度表示的是各点处的函数值减小最多的方向。因此，无法保证梯度所指的方向就是函数的最小值或者真正应该前进的方向。实际上，在复杂的函数中，梯度指示的方向基本上都不是函数值最小处。
 
-> 函数的极小值、最小值以及被称为鞍点(saddle point)的地方，梯度为0。极小值是局部最小值，也就是限定在某个范围内的最小值。鞍点是从某个方向上看是极大值，从另一个方向上看则是极小值的点。虽然梯度法是要寻找梯度为0的地方，但是那个地方不一定就是最小值（也有可能是极小值或者鞍点）​。此外，当函数很复杂且呈扁平状时，学习可能会进入一个（几乎）平坦的地区，陷入被称为“学习高原”的无法前进的停滞期。
+> 函数的极小值、最小值以及被称为鞍点(saddle point)的地方，梯度为 0。极小值是局部最小值，也就是限定在某个范围内的最小值。鞍点是从某个方向上看是极大值，从另一个方向上看则是极小值的点。虽然梯度法是要寻找梯度为 0 的地方，但是那个地方不一定就是最小值（也有可能是极小值或者鞍点）​。此外，当函数很复杂且呈扁平状时，学习可能会进入一个（几乎）平坦的地区，陷入被称为“学习高原”的无法前进的停滞期。
 
 虽然梯度的方向并不一定指向最小值，但沿着它的方向能够最大限度地减小函数的值。因此，在寻找函数的最小值（或者尽可能小的值）的位置的任务中，要以梯度的信息为线索，决定前进的方向。
 
@@ -398,11 +398,11 @@ $$
 x_1 = x_1 - η\frac{\partial{f}}{\partial{x_1}}
 $$
 
-式(4.7)的η表示更新量，在神经网络的学习中，称为学习率(learning rate)。学习率决定在一次学习中，应该学习多少，以及在多大程度上更新参数。
+式(4.7)的 η 表示更新量，在神经网络的学习中，称为学习率(learning rate)。学习率决定在一次学习中，应该学习多少，以及在多大程度上更新参数。
 
-学习率需要事先确定为某个值，比如0.01或0.001。一般而言，这个值过大或过小，都无法抵达一个“好的位置”​。在神经网络的学习中，一般会一边改变学习率的值，一边确认学习是否正确进行了。
+学习率需要事先确定为某个值，比如 0.01 或 0.001。一般而言，这个值过大或过小，都无法抵达一个“好的位置”​。在神经网络的学习中，一般会一边改变学习率的值，一边确认学习是否正确进行了。
 
-下面，我们用Python来实现梯度下降法。如下所示，这个实现很简单。
+下面，我们用 Python 来实现梯度下降法。如下所示，这个实现很简单。
 
 ```py
 def gradient_descent(f, init_x, learning_rate=0.01, step_num=100):
@@ -415,12 +415,12 @@ def gradient_descent(f, init_x, learning_rate=0.01, step_num=100):
     step_num: 迭代次数
     """
     for i in range(step_num):
-        grad = numberical_gradient(f, x)
+        grad = numerical_gradient(f, x)
         x -= learning_rate * grad
     return x
 ```
 
-参数f是要进行最优化的函数，init_x是初始值，lr是学习率learning rate，step_num是梯度法的重复次数。numerical_gradient(f,x)会求函数的梯度，用该梯度乘以学习率得到的值进行更新操作，由step_num指定重复的次数。
+参数 f 是要进行最优化的函数，init_x 是初始值，lr 是学习率 learning rate，step_num 是梯度法的重复次数。numerical_gradient(f,x)会求函数的梯度，用该梯度乘以学习率得到的值进行更新操作，由 step_num 指定重复的次数。
 
 使用这个函数可以求函数的极小值，顺利的话，还可以求函数的最小值。下面，我们就来尝试解决下面这个问题。
 
@@ -446,7 +446,6 @@ print(gradient_descent(function_2, np.array([-3.0, 4.0]), learning_rate=1e-10))
 
 > 像学习率这样的参数称为超参数。这是一种和神经网络的参数（权重和偏置）性质不同的参数。相对于神经网络的权重参数是通过训练数据和学习算法自动获得的，学习率这样的超参数则是人工设定的。一般来说，超参数需要尝试多个值，以便找到一种可以使学习顺利进行的设定。
 
-
 ### 4.4.2 神经网络的梯度
 
 神经网络的学习也要求梯度。这里所说的梯度是指损失函数关于权重参数的梯度。比如，有一个只有形状为 2x3 的权重 $W$ 的神经网络，损失函数用 $L$ 表示。此时，梯度可以用 $\frac{\partial{L}}{\partial{W}}$ 表示。用数学式表示的话，如下所示。
@@ -459,4 +458,262 @@ $$
 \frac{\partial{L}}{\partial{W}} = \begin{pmatrix} \frac{\partial{L}}{\partial{w_{11}}} & \frac{\partial{L}}{\partial{w_{12}}} & \frac{\partial{L}}{\partial{w_{13}}} \\ \frac{\partial{L}}{\partial{w_{21}}} & \frac{\partial{L}}{\partial{w_{22}}} & \frac{\partial{L}}{\partial{w_{23}}} \end{pmatrix}
 $$
 
-$\frac{\partial{L}}{\partial{W}}$的各元素关于$W$的偏导数。比如，第1行第1列的元素$\frac{\partial{L}}{\partial{w_{11}}}$表示当$w_{11}$稍微变化时，损失函数L会发生多大变化。这里的重点是，$\frac{\partial{L}}{\partial{W}}$的形状和$W$相同。
+$\frac{\partial{L}}{\partial{W}}$的各元素关于$W$的偏导数。比如，第 1 行第 1 列的元素$\frac{\partial{L}}{\partial{w_{11}}}$表示当$w_{11}$稍微变化时，损失函数 L 会发生多大变化。这里的重点是，$\frac{\partial{L}}{\partial{W}}$的形状和$W$相同。实际上，上式中的 $W$ 和 $\frac{\partial{L}}{\partial{W}}$ 都是 2x3 的形状。
+
+下面，我们以一个简单的神经网络为例，来实现求梯度的代码。为此，我们要实现一个名为 SimpleNet 的类。
+
+```py
+import numpy as np
+
+def softmax(x):
+    """
+    softmax 的 Docstring
+
+    :param x: 说明
+    """
+    max_x = np.max(x)
+    normal_x = np.exp(x - max_x + 1e-4)
+    return normal_x / np.sum(normal_x)
+
+def cross_entropy(x, t):
+    if x.ndim == 1:
+        x = x.reshape(1, x.size)
+        t = t.reshape(1, t.size)
+    batch_size = t.shape[0]
+    return -np.sum(t*np.log(x + 1e-7))/batch_size
+
+def _numerical_gradient_no_batch(f, x):
+    """
+    数值求梯度
+    f: 目标函数
+    x: 目标函数的输入值，numpy 数组
+    """
+    h = 1e-4
+    gradient_x = np.zeros_like(x)
+    for idx in range(x.size):
+        tmp_val = x[idx]
+        # f(x+h) 的计算
+        x[idx] = tmp_val + h
+        fxh1 = f(x)
+        # f(x-h) 的计算
+        x[idx] = tmp_val - h
+        fxh2 = f(x)
+        gradient_x[idx] = (fxh1 - fxh2) / (2 * h)
+        x[idx] = tmp_val  # 还原值
+    return gradient_x
+
+def numerical_gradient(f, X):
+    if X.ndim == 1:
+        return _numerical_gradient_no_batch(f, X)
+    else:
+        grad = np.zeros_like(X)
+        for idx, x in enumerate(X):
+            grad[idx] = _numerical_gradient_no_batch(f, x)
+        return grad
+
+
+class SimpleNet:
+
+    def __init__(self):
+        """
+        __init__: 初始化权重参数
+
+        :param self: 说明
+        """
+        self.W = np.random.randn(2, 3)  # 使用高斯分布进行初始化
+
+    def predict(self, x):
+        return np.dot(x, self.W)
+
+    def loss(self, x, t):
+        y = self.predict(x)
+        z = softmax(y)
+        loss = cross_entropy(z, t)
+
+        return loss
+```
+
+SimpleNet 类只有一个实例变量，即形状为 2×3 的权重参数。它有两个方法，一个是用于预测的 predict(x)，另一个是用于求损失函数值的 loss(x,t)。这里参数 x 接收输入数据，t 接收正确解标签。现在我们来试着用一下这个 SimpleNet。
+
+```py
+if __name__ == '__main__':
+    net = SimpleNet()
+    net.W = np.array([
+        [0.47355232, 0.9977393, 0.84668094],
+        [0.85557411, 0.03563661, 0.69422093]
+    ])
+    print(net.W)
+    # [[0.47355232 0.9977393  0.84668094]
+    # [0.85557411 0.03563661 0.69422093]]
+
+    x = np.array([0.6, 0.9])
+    p = net.predict(x)
+    print(p)
+    # [1.05414809 0.63071653 1.1328074 ]
+
+    print(np.argmax(p))
+    # 2
+
+    t = np.array([0, 0, 1])
+    loss = net.loss(x, t)
+    print(loss)
+    # 0.9280682857864075
+```
+
+接下来求梯度。和前面一样，我们使用 numerical_gradient(f, x)求梯度（这里定义的函数 f(W)的参数 W 是一个伪参数。因为 numerical_gradient(f, x)会在内部执行 f(x)，为了与之兼容而定义了 f(W)）​。
+
+```py
+loss_w = lambda W: net.loss(x, t)
+dw = numerical_gradient(loss_w, net.W)
+print(dw)
+# [[ 0.21924757  0.14356243 -0.36281   ]
+# [ 0.32887136  0.21534364 -0.544215  ]]
+```
+
+numerical_gradient(f, x)的参数 f 是函数，x 是传给函数 f 的参数。因此，这里参数 x 取 net.W，并定义一个计算损失函数的新函数 f，然后把这个新定义的函数传递给 numerical_gradient(f, x)。
+
+numerical\*gradient(f, net.W)的结果是 dW，一个形状为 2×3 的二维数组。观察一下 dW 的内容，例如，会发现$\frac{\partial{L}}{\partial{W}}$中的$\frac{\partial{L}}{\partial{w_{11}}}$的值大约是 0.2，这表示如果将$w_{11}$增加 h，那么损失函数的值会增加 0.2h。再如，$\frac{\partial{L}}{\partial{w_{23}}}$对应的值大约是-0.5，这表示如果将$w_{23}$增加 h，损失函数的值将减小 0.5h。因此，从减小损失函数值的观点来看，$w_{23}$应向正方向更新，$w_{11}$应向负方向更新。至于更新的程度，$w_{23}$比$w_{11}$的贡献要大。
+
+求出神经网络的梯度后，接下来只需根据梯度法，更新权重参数即可。在下一节中，我们会以 2 层神经网络为例，实现整个学习过程。
+
+## 4.5 学习算法的实现
+
+关于神经网络学习的基础知识，到这里就全部介绍完了。​“损失函数”​“mini-batch”​“梯度”​“梯度下降法”等关键词已经陆续登场，这里我们来确认一下神经网络的学习步骤，顺便复习一下这些内容。神经网络的学习步骤如下所示。
+
+- 前提
+  - 神经网络存在合适的权重和偏置，调整权重和偏置以便拟合训练数据的过程称为“学习”。神经网络的学习分成下面 4 个步骤。
+- ## 步骤 1（mini-batch）
+  - 从训练数据中随机选出一部分数据，这部分数据成为 mini-batch。我们的目标是减小 mini-batch 损失函数的值。
+- 步骤 2（计算梯度）
+  - 为了减小 mini-bach 的损失函数的值，需要求出各权重参数的梯度。梯度表示损失函数的值减小最多的方向
+- ## 步骤 3（更新参数）
+  - 将权重参数沿梯度方向进行微小更新
+- 步骤 4（重复）
+  - 重复步骤 1、2、3
+
+关于神经网络学习的基础知识，到这里就全部介绍完了。​“损失函数”​“mini-batch”​“梯度”​“梯度下降法”等关键词已经陆续登场，这里我们来确认一下神经网络的学习步骤，顺便复习一下这些内容。神经网络的学习步骤如下所示。
+
+下面，我们来实现手写数字识别的神经网络。这里以 2 层神经网络（隐藏层为 1 层的网络）为对象，使用 MNIST 数据集进行学习。
+
+### 4.5.1 2 层神经网络的类
+
+首先，我们将这个 2 层神经网络实现为一个名为 TwoLayerNet 的类，实现过程如下所示：
+
+```py
+import numpy as np
+
+def sigmoid(x):
+    return 1/(1 + np.exp(-x))
+
+def softmax(x):
+    max_x = np.max(x)
+    normal_x = np.exp(x-max_x + 1e-4)
+    return normal_x/np.sum(normal_x)
+
+def cross_entropy(x, t):
+    if x.ndim == 1:
+        x = x.reshape(1, x.size)
+        t = t.reshape(1, t.size)
+    batch_size = t.shape[0]
+    return -np.sum(t*np.log(x + 1e-7))/batch_size
+
+def _numerical_gradient(f, x):
+    grad = np.zeros_like(x)
+    h = 1e-7
+    for i in range(x.size):
+        temp_x = x[i]
+
+        x[i] = temp_x + h
+        fxh1 = f(x)
+
+        x[i] = temp_x - h
+        fxh2 = f(x)
+
+        grad[i] = (fxh2-fxh1)/(2*h)
+        x[i] = temp_x
+
+    return grad
+
+def numerical_gradient(f, x):
+    if x.ndim == 1:
+        return _numerical_gradient(f, x)
+    else:
+        grads = np.zeros_like(x)
+        for i, x_item in enumerate(x):
+            grads[i] = _numerical_gradient(f, x_item)
+        return grads
+
+class TwoLayerNet:
+
+    def __init__(self, input_size, hidden_size, output_size, weight_init=0.01):
+        self.params = {}
+
+        self.params['W1'] = np.random.randn(input_size, hidden_size) * weight_init
+        self.params['b1'] = np.random.randn(hidden_size)
+        self.params['W2'] = np.random.randn(hidden_size, output_size) * weight_init
+        self.params['b2'] = np.random.rand(output_size)
+
+    def predict(self, x):
+        W1, W2 = self.params['W1'], self.params['W2']
+        b1, b2 = self.params['b1'], self.params['b2']
+        a1 = np.dot(x, W1) + b1
+        z1 = sigmoid(a1)
+        a2 = np.dot(z1, W2) + b2
+        z2 = softmax(a2)
+
+        return z2
+
+    def loss(self, x, t):
+        y = self.predict(x)
+        return cross_entropy(y, t)
+
+    def accuracy(self, x, t):
+        y = self.predict(x)
+        y = np.argmax(y, axis=1)
+        t = np.argmax(t, axis=1)
+
+        accuracy = np.sum(y == t)/float(t.shape[0])
+        return accuracy
+
+    def numerical_gradient(self, x, t):
+        loss = lambda w: self.loss(x, t)
+        grads = {}
+        grads['W1'] = numerical_gradient(loss, self.params['W1'])
+        grads['b1'] = numerical_gradient(loss, self.params['b1'])
+        grads['W2'] = numerical_gradient(loss, self.params['W2'])
+        grads['b2'] = numerical_gradient(loss, self.params['b2'])
+
+        return grads
+
+if __name__ == '__main__':
+    net = TwoLayerNet(784, 100, 10)
+    # print(net.params['W1'].shape)
+    # print(net.params['b1'].shape)
+    # print(net.params['W2'].shape)
+    # print(net.params['b2'].shape)
+
+    # x = np.random.randn(100, 784)
+    # y = net.predict(x)
+    # print(y)
+    x = np.random.randn(100, 784)
+    t = np.random.randn(100, 10)
+    grads = net.numerical_gradient(x, t)
+    print(grads['W1'].shape)
+    print(grads['b1'].shape)
+    print(grads['W2'].shape)
+    print(grads['b2'].shape)
+```
+
+接着，我们来看一下 TwoLayerNet 的方法的实现。首先是**init**(self, input_size,hidden_size, output_size)方法，它是类的初始化方法（所谓初始化方法，就是生成 TwoLayerNet 实例时被调用的方法）​。从第 1 个参数开始，依次表示输入层的神经元数、隐藏层的神经元数、输出层的神经元数。另外，因为进行手写数字识别时，输入图像的大小是 784(28×28)，输出为 10 个类别，所以指定参数 input_size=784、output_size=10，将隐藏层的个数 hidden_size 设置为一个合适的值即可。
+
+此外，这个初始化方法会对权重参数进行初始化。如何设置权重参数的初始值这个问题是关系到神经网络能否成功学习的重要问题。后面我们会详细讨论权重参数的初始化，这里只需要知道，权重使用符合高斯分布的随机数进行初始化，偏置使用 0 进行初始化。predict(self, x)和 accuracy(self, x, t)的实现和上一章的神经网络的推理处理基本一样。如果仍有不明白的地方，请再回顾一下上一章的内容。另外，loss(self, x, t)是计算损失函数值的方法。这个方法会基于 predict()的结果和正确解标签，计算交叉熵误差。
+
+剩下的 numerical_gradient(self, x, t)方法会计算各个参数的梯度。根据数值微分，计算各个参数相对于损失函数的梯度。另外，gradient(self, x, t)是下一章要实现的方法，该方法使用误差反向传播法高效地计算梯度。
+
+### 4.5.2 mini-batch 的实现
+
+神经网络的学习的实现使用的是前面介绍过的 mini-batch 学习。所谓 mini-batch 学习，就是从训练数据中随机选择一部分数据（称为 mini-batch）​，再以这些 mini-batch 为对象，使用梯度法更新参数的过程。
+
+```py
+
+```

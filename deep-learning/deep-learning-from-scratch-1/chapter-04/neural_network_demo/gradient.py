@@ -48,7 +48,7 @@ def function_2(x):
 # print(numerical_diff(function_tmp2, 4.0))   # 7.999999999999119
 
 
-def numberical_gradient(f, x):
+def numerical_gradient(f, x):
     """
     数值求梯度
     f: 目标函数
@@ -69,9 +69,9 @@ def numberical_gradient(f, x):
     return gradient_x
 
 
-# print(numberical_gradient(function_2, np.array([3.0, 4.0])))    # [6. 8.]
-# print(numberical_gradient(function_2, np.array([0.0, 2.0])))    # [0. 4.]
-# print(numberical_gradient(function_2, np.array([3.0, 0.0])))    # [6. 0.]
+# print(numerical_gradient(function_2, np.array([3.0, 4.0])))    # [6. 8.]
+# print(numerical_gradient(function_2, np.array([0.0, 2.0])))    # [0. 4.]
+# print(numerical_gradient(function_2, np.array([3.0, 0.0])))    # [6. 0.]
 
 
 def gradient_descent(f, init_x, learning_rate=0.01, step_num=100):
@@ -84,7 +84,7 @@ def gradient_descent(f, init_x, learning_rate=0.01, step_num=100):
     step_num: 迭代次数
     """
     for i in range(step_num):
-        grad = numberical_gradient(f, x)
+        grad = numerical_gradient(f, x)
         x -= learning_rate * grad
     return x
 
