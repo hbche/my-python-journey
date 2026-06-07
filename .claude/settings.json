@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(fc-list :lang=zh)",
+      "Bash(python3 -c \"import matplotlib.font_manager as fm; fonts = [f.name for f in fm.FontManager\\(\\).ttflist if ''SimHei'' in f.name or ''Microsoft YaHei'' in f.name or ''SimSun'' in f.name]; print\\(''\\\\n''.join\\(fonts\\) if fonts else ''No common Chinese fonts found''\\)\")",
+      "Bash(python main.py)",
+      "Bash(ls -la \"f:\\\\my-python-journey\\\\machine-learning\\\\hands-on-machine-learning-with-Scikit-Learn&Keras&TensorFlow\\\\tools-numpy\\\\walk_through\\\\SHR169265_PK_样本采集流程图.png\")",
+      "Bash(ls -la \"f:/my-python-journey/machine-learning/hands-on-machine-learning-with-Scikit-Learn&Keras&TensorFlow/tools-numpy/walk_through/\"*.png)",
+      "Bash(python -c \"from langchain_qwq import ChatQwen; import inspect; print\\(inspect.signature\\(ChatQwen\\)\\)\")",
+      "Bash(python lang_chain_quick_start.py)",
+      "Bash(python LLM/hanhs-on-llm/chapter-02/walk_through/lang_chain_quick_start.py)",
+      "Bash(python LLM/hanhs-on-llm/chapter-02/walk_through/langchain_load_md.py)"
+    ]
+  }
+}
