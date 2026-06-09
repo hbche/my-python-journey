@@ -715,5 +715,93 @@ if __name__ == '__main__':
 神经网络的学习的实现使用的是前面介绍过的 mini-batch 学习。所谓 mini-batch 学习，就是从训练数据中随机选择一部分数据（称为 mini-batch）​，再以这些 mini-batch 为对象，使用梯度法更新参数的过程。
 
 ```py
+import numpy as np
+from mnist import load_mnist
+from two_layer_network import TwoLayerNet
 
+(x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, one_hot_label=True)
+train_loss_list = []
+
+# 超参数
+iters_number = 10000
+train_size = x_train.shape[0]
+batch_size = 100
+learning_rate = 0.01
+
+net = TwoLayerNet(input_size=784, hidden_size=100, output_size=10)
+
+for i in range(iters_number):
+    # 获取mini-batch
+    train_mask = np.random.choice(train_size, batch_size)
+    x_batch = x_train[train_mask]
+    t_batch = t_train[train_mask]
+
+    # 计算梯度
+    grads = net.numerical_gradient(x_batch, t_batch)
+    # 更新参数
+    for key in ("W1", "b1", "W2", "b2"):
+        net.params[key] = net.params[key] - learning_rate * grads[key]
+
+    # 记录学习过程
+    loss = net.loss(x_batch, t_batch)
+    train_loss_list.append(loss)
+```
+
+这里，mini-batch的大小为100，需要每次从60000个训练数据中随机取出100个数据（图像数据和正确解标签数据）​。然后，对这个包含100笔数据的mini-batch求梯度，使用随机梯度下降法(SGD)更新参数。这里，梯度法的更新次数（循环的次数）为10000。每更新一次，都对训练数据计算损失函数的值，并把该值添加到数组中。
+
+### 4.5.3 基于测试数据的评价
+
+我们确认了通过反复学习可以使损失函数的值逐渐减小这一事实。不过这个损失函数的值，严格地讲是“对训练数据的某个mini-batch的损失函数”的值。训练数据的损失函数值减小，虽说是神经网络的学习正常进行的一个信号，但光看这个结果还不能说明该神经网络在其他数据集上也一定能有同等程度的表现。
+
+神经网络的学习中，必须确认是否能够正确识别训练数据以外的其他数据，即确认是否会发生过拟合。过拟合是指，虽然训练数据中的数字图像能被正确辨别，但是不在训练数据中的数字图像却无法被识别的现象。
+
+神经网络学习的最初目标是掌握泛化能力，因此，要评价神经网络的泛化能力，就必须使用不包含在训练数据中的数据。下面的代码在进行学习的过程中，会定期地对训练数据和测试数据记录识别精度。这里，每经过一个epoch，我们都会记录下训练数据和测试数据的识别精度。
+
+> epoch是一个单位。一个epoch表示学习中所有训练数据均被使用过一次时的更新次数。比如，对于10000笔训练数据，用大小为100笔数据的mini-batch进行学习时，重复随机梯度下降法100次，所有的训练数据就都被“看过”了。此时，100次就是一个epoch。
+
+为了正确进行评价，我们来稍稍修改一下前面的代码。
+
+```py
+import numpy as np
+from mnist import load_mnist
+from two_layer_network import TwoLayerNet
+
+(x_train, t_train), (x_test, t_test) = load_mnist(normalize=True, one_hot_label=True)
+
+# 总训练样本
+train_size = x_train.shape[0]
+# 批次样本数
+batch_size = 100
+# epoch 数
+epoch_iters_numer = train_size / batch_size
+# 学习率
+learning_rate = 0.01
+# 训练次数
+train_iter_number = 10000
+# 训练过程中的误差缓存
+train_loss_list = []
+train_acc_list = []
+test_acc_list = []
+
+net = TwoLayerNet(input_size=784, hidden_size=100, output_size=10, weight_init=0.01)
+
+for i in range(train_iter_number):
+    batch_mask = np.random.choice(train_size, batch_size)
+    # 当前批次的训练数据和标记数据
+    x_batch = x_train[batch_mask]
+    t_batch = t_train[batch_mask]
+    grads = net.numerical_gradient(x_train, t_train)
+
+    for key in ("W1", "b1", "W2", "b2"):
+        net.params[key] = net.params[key] - learning_rate * grads[key]
+
+    loss = net.loss(x_train, t_train)
+    train_loss_list.append(loss)
+
+    if i % epoch_iters_numer == 0:
+        train_accuracy = net.accuracy(x_train, t_train)
+        test_accuracy = net.accuracy(x_test, t_test)
+        train_acc_list.append(train_accuracy)
+        test_acc_list.append(test_accuracy)
+        print(f"Train acc: {train_accuracy}, test acc: {test_accuracy}")
 ```
