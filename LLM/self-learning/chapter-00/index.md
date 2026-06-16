@@ -10,19 +10,13 @@ flowchart TD
     D --> E[🏗️ 模型与框架层<br>基础大模型、开发框架、模型微调库]
     E --> F[📊 数据与算力层<br>海量数据、GPU/TPU集群、向量数据库]
     F --> G[📚 基础理论与算法层<br>数学、ML/DL、Transformer、MoE]
-    
+
     D -.-> H[🤖 智能体<br>工具调用、自主决策]
     D -.-> I[📚 检索增强生成<br>私有知识库]
     D -.-> J[✍️ 提示工程<br>结构化交互]
     D -.-> K[⚙️ 模型微调<br>定制化模型]
 
-    style A fill:#f0f0f0,stroke:#333,stroke-width:2px
-    style B fill:#ffe6f0,stroke:#333,stroke-width:2px
-    style C fill:#e6f0ff,stroke:#333,stroke-width:2px
-    style D fill:#f0e6ff,stroke:#333,stroke-width:2px
-    style E fill:#e6ffe6,stroke:#333,stroke-width:2px
-    style F fill:#ffffe0,stroke:#333,stroke-width:2px
-    style G fill:#ffe6cc,stroke:#333,stroke-width:2px
+    
 ```
 
 ---
