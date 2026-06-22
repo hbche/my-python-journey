@@ -1,0 +1,4 @@
+interface:
+  display_name: "技术博客翻译"
+  short_description: "忠实易读的中文技术翻译"
+  default_prompt: "使用 $technical-blog-translator 将这篇英文技术文章翻译成忠实、流畅、易读的简体中文，并保留 Markdown、代码、链接、术语和作者意图。"

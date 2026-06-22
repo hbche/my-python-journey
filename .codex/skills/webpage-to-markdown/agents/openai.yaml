@@ -1,0 +1,4 @@
+interface:
+  display_name: "网页转 Markdown"
+  short_description: "将技术网页转换为本地 Markdown，并保存图片。"
+  default_prompt: "使用 $webpage-to-markdown 将这个技术博客或官方文档页面保存为本地 Markdown，并下载页面图片。"
