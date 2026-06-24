@@ -11,7 +11,7 @@ import numpy as np
 #         return 0
 
 
-def step_funciton(x: np.array):
+def step_function(x):
     """
     阶跃函数
     """
@@ -21,15 +21,15 @@ def step_funciton(x: np.array):
     return y.astype(np.int32)
 
 
-def plot_step_function(x: np.array):
-    y = step_funciton(x)
+def plot_step_function(x):
+    y = step_function(x)
     plt.plot(x, y)
     plt.ylim(-0.1, 1.1)
     plt.title("Step Funciton")
     plt.show()
 
 
-def sigmoid(x: np.array):
+def sigmoid(x):
     """
     sigmoid 激活函数
     """
@@ -44,7 +44,7 @@ def plot_sigmoid(x):
     plt.show()
 
 
-def ReLU(x: np.array):
+def ReLU(x):
     """
     ReLU 激活函数
     """
@@ -54,11 +54,17 @@ def ReLU(x: np.array):
     return y
 
 
-def plot_relu(x: np.array):
+def plot_relu(x):
     y = ReLU(x)
     plt.title("ReLU Function")
     plt.plot(x, y)
     plt.show()
 
-def identify_function(x: np.array):
+
+def identify_function(x):
     return x
+
+def softmax(x):
+    max_x = np.max(x)
+    normal_x = x - max_x
+    return normal_x/np.sum(normal_x)

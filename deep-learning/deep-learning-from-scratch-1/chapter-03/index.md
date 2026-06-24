@@ -8,7 +8,7 @@
 
 ### 3.1.1 神经网络的例子
 
-神经网络是一种分层、全连接的网状结构的算法。一个简单的神经网络至少具备输入层、隐藏层和输出层。一般我们是根据实际拥有权重和偏置参数的层数作为神经网络的层数（输入层、隐藏层和输出层的数量减1之后的数量）。
+神经网络是一种分层、全连接的网状结构的算法。一个简单的神经网络至少具备输入层、隐藏层和输出层。一般我们是根据实际拥有权重和偏置参数的层数作为神经网络的层数（输入层、隐藏层和输出层的数量减 1 之后的数量）。
 
 ### 3.1.2 复习感知机
 
@@ -23,13 +23,13 @@ $$
 
 $b$是被称为偏置的参数，用于控制神经元被激活的容易程度；$w_1$和$w_2$表示各个信号的权重的参数，用于控制各个信号的重要性。
 
-我们可以将偏执看做输入数据值为1对应的权重。
+我们可以将偏执看做输入数据值为 1 对应的权重。
 
 $$
 y=h(b+w_1x_1+w_2x_2)
 $$
 
-输入信号的总和会被函数$h(x)$转换，转换后的值就是输出y。
+输入信号的总和会被函数$h(x)$转换，转换后的值就是输出 y。
 
 $$
 h(x)=\left\{
@@ -57,7 +57,7 @@ h(x)=\left\{
 \right.
 $$
 
-形如上面这种以0为阈值，大于0的输出1，小于等于0的输出0，这种函数称为“阶跃函数”。因此可以说感知机中是使用阶跃函数作为激活函数。实际上，如果将激活函数换成其他函数，就可以进入神经网络的世界了。
+形如上面这种以 0 为阈值，大于 0 的输出 1，小于等于 0 的输出 0，这种函数称为“阶跃函数”。因此可以说感知机中是使用阶跃函数作为激活函数。实际上，如果将激活函数换成其他函数，就可以进入神经网络的世界了。
 
 接下来介绍神经网络的激活函数。
 
@@ -82,10 +82,10 @@ def step_function(x):
         return 0
 ```
 
-这个版本的实现简单、易于理解，但是参数x只能接受实数（浮点数）。为了扩展支持 NumPy 数组，我们做如下实现，其中用到了一些 NumPy 的技巧：
+这个版本的实现简单、易于理解，但是参数 x 只能接受实数（浮点数）。为了扩展支持 NumPy 数组，我们做如下实现，其中用到了一些 NumPy 的技巧：
 
 ```py
-def step_funciton(x: np.array):
+def step_function(x: np.array):
     # 将数值型数组转换成 True / False 的数组
     y = x > 0
     # 再将布尔值类型的数值转换成0\1数组
@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
 ```py
 def plot_step_function(x: np.array):
-    y = step_funciton(x)
+    y = step_function(x)
     plt.plot(x, y)
     plt.ylim(-0.1, 1.1)
     plt.show()
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     plot_step_function(x)
 ```
 
-![](./assets/step_funciton.png)
+![](./assets/step_function.png)
 
 ### 3.2.4 sigmoid 函数的实现
 
@@ -149,17 +149,17 @@ if __name__ == "__main__":
 
 ![](./assets//sigmoid_function.png)
 
-### 3.2.5 sigmoid函数和阶跃函数的比较
+### 3.2.5 sigmoid 函数和阶跃函数的比较
 
 ```py
 import matplotlib.pyplot as plt
 import numpy as np
-from activation_funciton import sigmoid, step_funciton
+from activation_funciton import sigmoid, step_function
 
 if __name__ == "__main__":
     x = np.arange(-5.0, 5.0, 0.1)
     y1 = sigmoid(x)
-    y2 = step_funciton(x)
+    y2 = step_function(x)
     plt.ylim(-0.1, 1.1)
     plt.title("Sigmoid Funciton vs Step Funciton")
     plt.plot(x, y1)
@@ -171,13 +171,13 @@ if __name__ == "__main__":
 
 不同点：
 
-1. sigmoid 是一条平滑的曲线，输出随着输入发生连续性的变化，而阶跃函数以0为边界，输出发生急剧性的变化。
-2. 阶跃函数只能返回0和1，sigmoid函数返回0~1之间的实数。如果说感知机中神经元之间流动的是0或1的二元信号，那么神经网络中流动的就是连续的实数值信号。阶跃函数类似“竹筒敲石”，sigmoid类似“水车”。
+1. sigmoid 是一条平滑的曲线，输出随着输入发生连续性的变化，而阶跃函数以 0 为边界，输出发生急剧性的变化。
+2. 阶跃函数只能返回 0 和 1，sigmoid 函数返回 0~1 之间的实数。如果说感知机中神经元之间流动的是 0 或 1 的二元信号，那么神经网络中流动的就是连续的实数值信号。阶跃函数类似“竹筒敲石”，sigmoid 类似“水车”。
 
 相同点：
 
-1. 两者输出范围相近，sigmoid为$(0, 1)$，阶跃函数为 $0$ 或 $1$，两者不管输入有多大或多小，总能收敛到0到1之间。
-2. 都属于非线性函数，sigmoid是一条曲线，阶跃函数是一条折线。
+1. 两者输出范围相近，sigmoid 为$(0, 1)$，阶跃函数为 $0$ 或 $1$，两者不管输入有多大或多小，总能收敛到 0 到 1 之间。
+2. 都属于非线性函数，sigmoid 是一条曲线，阶跃函数是一条折线。
 
 ### 3.2.6 非线性函数
 
@@ -187,7 +187,7 @@ if __name__ == "__main__":
 
 ### 3.2.7 ReLU 函数
 
-sigmoid 函数作为早期神经网络的激活函数使用，现代神经网络的激活函数多用 ReLU 函数。ReLU函数的数学表达式如下：
+sigmoid 函数作为早期神经网络的激活函数使用，现代神经网络的激活函数多用 ReLU 函数。ReLU 函数的数学表达式如下：
 
 $$
 f(x)=\left\{
@@ -550,11 +550,11 @@ def softmax(a):
 softmax 函数的实现可以像式(3.11)这样进行改进。
 
 $$
-y_k = \frac{\exp(a_k)}{\sum_{i=1}^n\exp(a_i)}
+y_k = \frac{\exp(a_k)}{\sum_{i=1}^n\exp(a_i)}\\
 
-=\frac{C\exp(a_k)}{C\sum_{i=1}^{n}exp(a_i)}
+=\frac{C\exp(a_k)}{C\sum_{i=1}^{n}exp(a_i)}\\
 
-=\frac{\exp(a_k +logC)}{\sum_{i=1}^n\exp(a_k + logC)}
+=\frac{\exp(a_k +logC)}{\sum_{i=1}^n\exp(a_k + logC)}\\
 
 =\frac{\exp(a_k+C')}{\sum_{i=1}^n\exp(a_i + C')}
 $$
@@ -614,3 +614,50 @@ print(np.sum(y))    # 1.0
 输出层的神经元数量需要根据待解决的问题来决定。对于分类问题，输出层的神经元数量一般设定为类别的数量。比如，对于某个输入图像，预测是图中的数字 0 到 9 中的哪一个的问题，可以将输出层的神经元设定为 10 个。
 
 ## 3.6 手写数字识别
+
+介绍完神经网络的结构之后，我们来试着解决实际问题。
+
+### 3.6.1 MNIST 数据集
+
+首先我们尝试加载 MINST 数据集
+
+```py
+from dataset.mnist import load_mnist
+
+# 第一次调用需要花费一些时间
+(x_train, t_train), (x_test, t_test) = load_mnist(flatten=True, normalize=False)
+
+# 输出各个数据的形状
+print(x_train.shape)
+# (60000, 784)
+print(t_train.shape)
+# (60000,)
+print(x_test.shape)
+# (10000, 784)
+print(t_test.shape)
+# (10000,)
+```
+
+接下来我们尝试显示 MNIST 图像。我们需要借助 Pillow 依赖库来完成图片展示。
+
+```py
+from PIL import Image
+import numpy as np
+from dataset.mnist import load_mnist
+
+def show_image(img):
+    pil_img = Image.fromarray(np.uint8(img))
+    pil_img.show()
+
+
+(x_train, t_train), (x_test, t_test)  = load_mnist(flatten=True, normalize=False)
+img = x_train[0]
+label = t_train[0]
+print(label)    # 5
+
+print(img.shape)    # (784,)
+img = img.reshape(28, 28)
+print(img.shape)    # (28, 28)
+
+show_image(img)
+```

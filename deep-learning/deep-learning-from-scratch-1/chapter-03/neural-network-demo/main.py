@@ -1,5 +1,5 @@
 import numpy as np
-from activation_funciton import identify_function, sigmoid
+from activation_function import identify_function, sigmoid
 
 
 def init_network():
