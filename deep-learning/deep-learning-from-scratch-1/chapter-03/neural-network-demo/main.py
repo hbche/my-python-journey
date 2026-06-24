@@ -1,65 +1,44 @@
 import numpy as np
+from activation_funciton import identify_function, sigmoid
+
 
 def init_network():
     """
-    init_network 的 初始化权重和偏置
+    初始化神经网络的参数
     """
     network = {}
-    network['W1'] = np.array([
-        [0.1, 0.3, 0.5],
-        [0.2, 0.4, 0.6]
-    ])
-    network['B1'] = np.array([0.1, 0.2, 0.3])
-    network['W2'] = np.array([
-        [0.1, 0.4],
-        [0.2, 0.5],
-        [0.3, 0.6]
-    ])
-    network['B2'] = np.array([0.1, 0.2])
-    network['W3'] = np.array([
-        [0.1, 0.3],
-        [0.2, 0.4]
-    ])
-    network['B3'] = np.array([0.1, 0.2])
+    # 第一层参数
+    network["w1"] = np.array([[0.1, 0.3, 0.5], [0.2, 0.4, 0.6]])
+    network["b1"] = np.array([0.1, 0.2, 0.3])
+    # 第二层参数
+    network["w2"] = np.array([[0.1, 0.4], [0.2, 0.5], [0.3, 0.6]])
+    network["b2"] = np.array([0.1, 0.2])
+    # 第三层参数
+    network["w3"] = np.array([[0.1, 0.3], [0.2, 0.4]])
+    network["b3"] = np.array([0.1, 0.2])
+
     return network
 
 
-def sigmoid(x):
-    """
-    sigmoid 的 激活函数
-    
-    :param x: np.array 数组
-    """
-    return 1/(1 + np.exp(-x))
-
-
-def identity_function(x):
-    """
-    identity_function 的 恒等式
-    
-    :param x: 说明
-    """
-    return x
-
 def forward(network, x):
     """
-    forward 的 前向传播
-    
-    :param network: 说明
-    :param x: 说明
+    神经网络的前向计算
     """
-    W1, W2, W3 = network['W1'], network['W2'], network['W3']
-    B1, B2, B3 = network['B1'], network['B2'], network['B3']
-    a1 = np.dot(x, W1) + B1
+    w1, w2, w3 = network["w1"], network["w2"], network["w3"]
+    b1, b2, b3 = network["b1"], network["b2"], network["b3"]
+    a1 = np.dot(x, w1) + b1
     z1 = sigmoid(a1)
-    a2 = np.dot(z1, W2) + B2
+    a2 = np.dot(z1, w2) + b2
     z2 = sigmoid(a2)
-    a3 = np.dot(z2, W3) + B3
-    y = identity_function(a3)
+    a3 = np.dot(z2, w3) + b3
+    y = identify_function(a3)
+
     return y
 
-if __name__ == '__main__':
-    network = init_network()
+
+if __name__ == "__main__":
     x = np.array([1.0, 0.5])
+    network = init_network()
     y = forward(network, x)
-    print(y)    # [0.31682708 0.69627909]
+    print(y)
+    # [0.31682708 0.69627909]
