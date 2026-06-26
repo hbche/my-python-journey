@@ -661,3 +661,171 @@ print(img.shape)    # (28, 28)
 
 show_image(img)
 ```
+
+### 3.6.2 神经网络的推理处理
+
+我们已经有一个训练好的模型参数，我们直接加载进来，对MNIST数据集进行识别和识别精度计算。其中 `sample_weight.pkl` 需要通过 [deep-learning-from-scratch](https://github.com/oreilly-japan/deep-learning-from-scratch/blob/master/ch03/sample_weight.pkl) 下载。
+
+```py
+import pickle
+from time import time
+
+import numpy as np
+from activation_function import sigmoid, softmax
+from dataset.mnist import load_mnist
+
+
+def init_network():
+    """
+    加载参数文件，解析参数，生成默认的权重和偏置参数
+    """
+    with open("sample_weight.pkl", "rb") as f:
+        network = pickle.load(f)
+    return network
+
+
+def predict(network, x):
+    W1, W2, W3 = network["W1"], network["W2"], network["W3"]
+    b1, b2, b3 = network["b1"], network["b2"], network["b3"]
+
+    a1 = np.dot(x, W1) + b1
+    z1 = sigmoid(a1)
+
+    a2 = np.dot(z1, W2) + b2
+    z2 = sigmoid(a2)
+
+    a3 = np.dot(z2, W3) + b3
+    result = softmax(a3)
+
+    return result
+
+
+def get_data():
+    # 第一次调用需要花费一些时间
+    # 此处一定要记住，必须进行归一化处理，否则大数值会导致 np.exp 函数计算溢出。 Python 中 float64 的最大上限（约 $1.79 \times 10^{308}$），np.exp(1000)就是超过该阈值的一个例子
+    (x_train, t_train), (x_test, t_test) = load_mnist(
+        flatten=True, normalize=True, one_hot_label=False
+    )
+
+    return (x_train, t_train)
+
+
+if __name__ == "__main__":
+    network = init_network()
+    x_test, t_test = get_data()
+
+    accracy_cnt = 0
+    start = time()
+    for i in range(len(x_test)):
+        predict_label = np.argmax(predict(network, x_test[i]))
+        if predict_label == t_test[i]:
+            accracy_cnt += 1
+    print(f"Accracy: {float(accracy_cnt) / len(x_test)}.")
+    # Accracy: 0.9357666666666666.
+    end = time()
+    print(f"Total time: {end - start}")
+    # Total time: 1.7309372425079346
+```
+
+### 3.6.3 批处理
+
+我们来查看下现有权重参数的形状。
+
+```py
+from neural_net_mnist import init_network
+
+if __name__ == "__main__":
+    network = init_network()
+    W1, W2, W3 = network["W1"], network["W2"], network["W3"]
+    print(W1.shape)
+    # (784, 50)
+    print(W2.shape)
+    # (50, 100)
+    print(W3.shape)
+    # (100, 10)
+```
+
+批处理对计算机的运算大有利处，可以大幅缩短每张图像的处理时间。这是因为大多数处理数值计算的库都进行了能够高效处理大型数组运算的最优化。并且，在神经网络的运算中，当数据传送称为瓶颈时，批处理可以减轻数据总线的负荷（严格地讲，相对于数据读入，可以将更多的时间用在计算上）。也就是说，批处理一次性计算大型数组要比分开逐步计算每个小型数组速度更快。
+
+下面是批处理实现：
+
+```py
+# 批处理实现高效计算
+import pickle
+import time
+
+import numpy as np
+from dataset.mnist import load_mnist
+
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+
+def softmax(x):
+    max_x = np.max(x)
+    # 防止溢出，将所有数据进行正则化处理，都减去一个最大值
+    normal_x = np.exp(x - max_x)
+    return normal_x / np.sum(normal_x)
+
+
+def load_data():
+    (x_train, t_train), (x_test, t_test) = load_mnist(
+        normalize=True, flatten=True, one_hot_label=False
+    )
+    return x_test, t_test
+
+
+def init_network():
+    with open("sample_weight.pkl", "rb") as f:
+        network = pickle.load(f)
+    return network
+
+
+def predict(network, x):
+    """
+    根据给定权重参数，识别数据x
+    """
+    W1, W2, W3 = network["W1"], network["W2"], network["W3"]
+    b1, b2, b3 = network["b1"], network["b2"], network["b3"]
+
+    a1 = np.dot(x, W1) + b1
+    z1 = sigmoid(a1)
+    a2 = np.dot(z1, W2) + b2
+    z2 = sigmoid(a2)
+    a3 = np.dot(z2, W3) + b3
+
+    result = softmax(a3)
+    return result
+
+
+# 批量数据大小
+batch_size = 200
+# 识别正确计数
+accuracy_count = 0
+
+if __name__ == "__main__":
+    x_test, t_test = load_data()
+    network = init_network()
+    start = time.time()
+    for i in range(0, len(x_test), batch_size):
+        batch_test = x_test[i : i + batch_size]
+        batch_predict = predict(network, batch_test)
+        # 计算每个数据中概率最大的数据的索引作为最终处理结果，将二维数组转换为一维数组
+        preduct_result = np.argmax(batch_predict, axis=1)
+        accuracy_count += np.sum(t_test[i : i + batch_size] == preduct_result)
+    print(f"Accuracy {float(accuracy_count) / len(x_test)}")
+    end = time.time()
+    # Accuracy 0.9352
+    print(f"Total time: {end - start}")
+    # Total time: 0.019620418548583984
+```
+
+通过对比计算耗时，我们发现，批处理的计算耗时比普通版的计算耗时领先了几乎两个数量级（几乎是100倍）
+
+## 3.7 小结
+
+- 神经网络中的激活函数 阶跃函数、sigmoid函数和ReLU函数。
+- 通过NumPy实现神经网络
+- 输出层的激活函数，回归问题中一般使用恒等式，分类问题中一般使用 softmax 函数，softmax需要处理溢出问题
+- 分类问题中，输出层的神经元数量需要设置为要分类的类别数，例如手写数字识别，输出层神经元是10（因为只有十个基础数字0~9）

@@ -64,7 +64,11 @@ def plot_relu(x):
 def identify_function(x):
     return x
 
+
 def softmax(x):
+    """
+    softmax激活函数
+    """
     max_x = np.max(x)
-    normal_x = x - max_x
-    return normal_x/np.sum(normal_x)
+    normal_x = np.exp(x - max_x)
+    return normal_x / np.sum(normal_x)
