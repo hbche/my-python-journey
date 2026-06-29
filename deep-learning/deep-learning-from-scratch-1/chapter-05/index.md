@@ -236,3 +236,203 @@ class ReLULayer:
 
         return dx
 ```
+
+### 5.5.2 Sigmoid 层
+
+sigmoid 函数表达式：
+
+$$
+y = \frac{1}{1+e^{-x}}
+$$
+
+我们先基于链式法则，完成 sigmoid 梯度计算的解析解：
+
+$$
+\frac{\partial{y}}{\partial{x}}=-\frac{1}{(1+e^{-x})^{2}}(-e^{-x})=\frac{1}{1+e^{-x}}\frac{e^{-x}}{1+e^{-x}}
+$$
+
+从而计算得到：
+
+$$
+\frac{\partial{y}}{\partial{x}}=\frac{1}{1+e^{-x}}\frac{(1+e^{-x})-1}{1+e^{-x}}=y(1-y)
+$$
+
+代码实现如下：
+
+```py
+class Sigmoid:
+    """
+    sigmoid 激活层
+    """
+
+    def __init__(self):
+        self.out = None
+
+    def forward(self, x):
+        out = 1 / (1 + np.exp(-x))
+        self.out = out
+
+        return out
+
+    def backward(self, dout):
+        dx = dout * self.out * (1.0 - self.out)
+
+        return dx
+```
+
+在这个实现中，正向传播时将输出保存在实例变量 out 中。然后，反向传播时，使用该变量 out 进行计算。
+
+## 5.6 Affine/Softmax 层的实现
+
+### 5.6.1 Affine 层
+
+在神经网络的正向传播中，为了计算加权信号的总和，使用了矩阵的乘积运算。
+
+权重计算表达式：
+
+$$
+L=X\cdot{W}+B
+$$
+
+我们假设 $X 的 shape 为 $(2,)$，$W$ 的 shape 为 $(2, 3)$，B 的 shape 为 $(3, )$，我们来推导 $\frac{\partial{L}}{\partial{X}}$ 和 $\frac{\partial{L}}{\partial{W}}$，其中 $X$ 的 shape 和其导数的维度需要保持一致，$W$ 的 shape 也需要和其导数的维度保持一致：
+
+$$
+\frac{\partial{L}}{\partial{X}}=\frac{\partial{L}}{\partial{Y}}W^T\\
+\frac{\partial{L}}{\partial{W}}=X^T\frac{\partial{L}}{\partial{Y}}
+$$
+
+### 5.6.2 批量版本的 Affine 层
+
+假设输入数据有 N 个。则 $X$ 的维度为 $(N, 2)$，$W$的维度为$(2, 3)$，$Y$的维度为$(N, 3)$。
+
+加上偏置时，需要特别注意。正向传播时，偏置被加到 $X\cdot{W}$ 的各个数据上。比如，N=2，偏置会被分别加到这两个数据上，具体例子如下：
+
+```py
+X_dot_W = np.array([[0, 0, 0,], [10, 10, 10]])
+B = np.array([1, 2, 3])
+X_dot_W + B
+# array([[ 1,  2,  3],
+#        [11, 12, 13]])
+```
+
+正向传播时，偏置会被加到每一个数据（第1个、第2个……）上。因此，反向传播时，各个数据的反向传播的值需要汇总为偏置的元素。用代码表示的话，如下所示：
+
+```py
+>>> dY = np.array([[1, 2, 3], [4, 5, 6]])
+>>> db = np.sum(dY, axis=0)
+>>> db
+array([5, 7, 9])
+```
+
+这个例子中，假定数据有2个。偏置的反向传播会对这2个数据的导数按元素进行求和。因此，这里
+
+代码实现如下：
+
+```py
+class Affine:
+    """
+    Affine 仿射层，计算权重参数的总和
+    """
+
+    def __init__(self, w, b):
+        self.w = w
+        self.b = b
+        self.x = None
+        self.dw = None
+        self.db = None
+
+    def forward(self, x):
+        self.x = x
+        out = np.dot(x, self.w) + self.b
+
+        return out
+
+    def backward(self, dout):
+        dx = np.dot(dout, self.w.T)
+        self.dw = np.dot(self.x.T, dout)
+        self.db = np.sum(dout, axis=0)
+
+        return dx
+```
+
+### 5.6.3 Softmax-with-Loss 层
+
+神经网络中进行的处理有推理和学习两个阶段。神经网络的推理通常不使用Softmax层。例如手写数字识别，在进行推理时会将最后一个 Affine 层的输出作为识别结果。神经网络中未被正则化的输出结果有时被称为“得分”。也就是说，当神经网络的推理只需要给出一个答案的情况下，因为此时只对得分最大值感兴趣，所以不需要Softmax层。不过，神经网络的学习阶段则需要Softmax层。
+
+我们接下来以交叉熵误差作为损失函数，封装 Softmax-with-Loss 层（Softmax函数+交叉熵误差）。
+
+我们先进行拆解，Softmax层和CrossEntropyError层。
+
+Softmax 函数表达式如下：
+
+$$
+E=-\sum_{k}{t_k}\log({y_k})
+$$
+
+TODO：详细推理过程需要补充
+
+整体代码实现如下：
+
+```py
+
+class SoftmaxWithLoss:
+    """
+    基于交叉熵误差作为损失函数的Softmax层
+    """
+
+    def __init__(self):
+        # 经过 Softmax 计算之后的结果
+        self.y = None
+        self.t = None
+        self.loss = None
+
+    def forward(self, x, t):
+        self.y = softmax(x)
+        self.t = t
+        self.loss = cross_entropy_error(x, t)
+
+        return self.loss
+
+    def backward(self, dout=1):
+        batch_size = self.t.shape[0]
+        dx = (self.y - self.t) / batch_size
+
+        return dx
+```
+
+## 5.7 误差反向传播法的实现
+
+### 5.7.1 神经网络学习的全貌图
+
+##### 前提
+
+神经网络中有合适的权重和偏置，调整权重和偏置以便拟合训练数据的过程称为学习。神经网络的学习分为下面4个步骤。
+
+##### 步骤1（mini-batch）
+
+从训练数据中随机选择一部分数据
+
+##### 步骤2（计算梯度）
+
+计算损失函数关于各个权重参数的梯度。
+
+##### 步骤3（更新参数）
+
+将权重参数沿梯度方向进行微小的更新。
+
+##### 步骤4（重复）
+
+重复步骤1、步骤2、步骤3。
+
+
+### 5.7.2 对应误差反向传播法的神经网络的实现
+
+以两层神经网络为例进行实现:
+
+``` py
+
+```
+
+### 5.7.3 误差反向传播法的梯度确认
+
+
