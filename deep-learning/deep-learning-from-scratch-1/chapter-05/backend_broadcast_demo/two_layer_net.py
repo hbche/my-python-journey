@@ -38,6 +38,7 @@ class TwoLayerNet:
         if t.ndim != 1:
             t = np.argmax(t, axis=1)
         accuracy = np.sum(y == t) / float(t.shape[0])
+
         return accuracy
 
     def numerical_gradient(self, x, t):
@@ -57,7 +58,9 @@ class TwoLayerNet:
         dout = 1
         dout = self.last_layer.backward(dout)
 
-        for layer in list(self.layers.values()).reverse():
+        # reverse 函数是一个就地修改原始数据的函数，其返回值为None
+        # 此处需要使用 reversed 函数，在不修改原始输入参数的前提下返回倒序之后的新列表
+        for layer in reversed(list(self.layers.values())):
             dout = layer.backward(dout)
 
         grads = {}
