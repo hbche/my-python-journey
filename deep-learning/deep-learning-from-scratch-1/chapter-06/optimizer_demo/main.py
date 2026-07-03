@@ -1,45 +1,3 @@
-# 第 6 章 与学习相关的技巧
-
-目标：
-
-1. 理解神经网络的学习过程
-2. 理解并掌握SGD（stochastic ）等常用学习算法
-3. 掌握参数初始化的方法
-4. 理解并掌握正则化常用手法
-
-## 6.1 参数的更新
-
-### 6.1.1 探险家的故事
-
-一个走夜路的探险家如何根据坡度判断一步一步深入谷底。
-
-### 6.1.2 SGD
-
-数学公式：
-
-$$
-W = W - learning\_rate * \frac{\partial{L}}{\partial{W}}
-$$
-
-代码实现：
-
-```py
-class SGD:
-    """
-    随机梯度下降法计算权重
-    """
-
-    def __init__(self, learning_rate=0.1):
-        self.learning_rate = learning_rate
-
-    def update(self, params, grads):
-        for key in grads.keys():
-            params[key] -= self.learning_rate * grads[key]
-```
-
-使用方法：
-
-```py
 import numpy as np
 from dataset.mnist import load_mnist
 from optimizer import SGD
@@ -102,12 +60,3 @@ if __name__ == "__main__":
             test_acc = network.accuracy(x_test, t_test)
             test_acc_list.append(test_acc)
             print(f"Train Accuracy: {train_acc}, Test Accuracy: {test_acc}")
-```
-
-### 6.1.3 SGD 的缺点
-
-虽然 SGD 简单，并且容易实现，但是在解决某些问题时可能没有效率。我们可以使用SGD计算下面这个函数的最小值：
-
-$$
-f(x, y) = \frac{1}{20}x^2 + y^2
-$$
