@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from optimizer import RMSProp
+from optimizer import Adam
 
 # 使用等高线绘制函数 $f(x,y)=\frac{1}{20}x^2+y^2$的梯度
 
@@ -22,7 +22,7 @@ def move_points():
 
     x_history = []
     y_history = []
-    optimizer = RMSProp(ratio=0.9, learning_rate=1.0)
+    optimizer = Adam(learning_rate=0.3)
 
     for i in range(20):
         x_history.append(params["x"])

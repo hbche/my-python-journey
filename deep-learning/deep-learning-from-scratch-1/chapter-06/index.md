@@ -18,8 +18,12 @@
 数学公式：
 
 $$
-W = W - learning\_rate * \frac{\partial{L}}{\partial{W}}
+W = W - η * \frac{\partial{L}}{\partial{W}}
 $$
+
+其中：
+
+- η：学习率
 
 代码实现：
 
@@ -158,6 +162,8 @@ ax.set_yticks(np.arange(-10, 10, 5))
 plt.show()
 ```
 
+![](./assets/SGD_3d_surface.png)
+
 接下来我们在绘制等高线示意图：
 
 ```py
@@ -187,6 +193,8 @@ plt.axis("equal")
 
 plt.show()
 ```
+
+![](./assets/SGD_contour.png)
 
 为了能明显看出 SGD 的训练缺陷，我们现在在等高线图中绘制训练过程中的移动路径：
 
@@ -273,9 +281,9 @@ if __name__ == "__main__":
 
 ![](./assets/SGD_grads_1.png)
 
-也就是说，SGD的缺点是，如果函数的形状非匀向，比如呈延伸状，搜索的路径就非常低效。
+也就是说，SGD的缺点是，如果函数的形状非匀向，比如呈延伸状，搜索的路径就非常低效。最高效的路径是垂直于等高线的路径，因为那样才是最快到达最小值的最短路径。
 
-SGD低效的根本原因是，梯度的方向并没有指向最小值的方向。
+SGD低效的根本原因是，梯度的方向并没有指向最小值的方向，而是在“震荡”前行。
 
 有两个问题：
 
@@ -310,7 +318,7 @@ $$
 
 - $g_t$：表示梯度
 - η：学习率
-- β：Momentum 系数
+- β：Momentum 系数，默认为0.9
 
 我们转换成如下方式：
 
@@ -666,7 +674,7 @@ def move_points():
 
     x_history = []
     y_history = []
-    optimizer = RMSProp(ratio=0.9, learning_rate=1.0)
+    optimizer = RMSProp(learning_rate=0.5)
 
     for i in range(20):
         x_history.append(params["x"])
@@ -717,6 +725,429 @@ if __name__ == "__main__":
 
 ### 6.1.7 Adam
 
-为了解决 AdaGrad 算法中梯度消失的问题，我们结合 momentum 算法试试？
+Adam 想同时解决两个问题：
 
-Momentum 参照小球在碗中滚动的物理规则进行移动，AdaGrad为参数的每个元素适当地调整更新步伐。
+- Momentum
+  - 利用历史梯度，加快收敛
+  - 减少震荡
+- RMSProp
+  - 每个参数使用不同学习率
+  - 防止学习过大或过小
+
+因此 Adam 同时维护两个变量：
+
+- 一阶矩阵：保存梯度的指数滑动平均 - $m$
+- 二阶矩阵：保存提低平方的指数滑动平均 - $v$
+
+#### Adam 的数学表达式
+
+$$
+g_t​=∇_θ​J(θ_t​)
+$$
+
+表示第 t 次迭代的梯度。
+
+##### 第一步：更新一阶矩阵(Momentum)
+
+$$
+m_t=β_1m_{t-1}+(1-β_1)g_t
+$$
+
+其中：
+
+- $β_1$ = 0.9 是默认值
+- $m_t$: 表示保存的梯度方向。
+
+它其实就是 Momentum。
+
+##### 第二步：更新二阶矩阵(RMSProp)
+
+$$
+v_t=β_2v_{t-1}+(1-β_2)g_t^2
+$$
+
+其中：
+
+- $β_2$ = 0.999
+- $v_t$ 保存的是梯度平方，它就是 RMSProp 计算。
+
+##### 第三步：偏差修正（Bias Correction）
+
+初始化：
+
+$$
+m_0=0\\
+v_0=0
+$$
+
+导致训练开始时，估计值偏小。因此，Adam 引入 一阶修正和二阶修正。
+
+1. 修正一阶矩阵
+   $$
+   \hat{m_t} = \frac{m_t}{1-β_1^t}
+   $$
+2. 修正二阶矩阵
+   $$
+   \hat{v_t} = \frac{v_t}{1-β_2^t}
+   $$
+
+##### 第四步：更新参数
+
+$$
+θ_t=θ_{t-} - η\frac{\hat{m_t}}{\sqrt{\hat{v_t}} + ε}
+$$
+
+其中：
+
+- η：学习率
+- ε：防止除数为零，通常为 $10^{-7}$ 或 $10^{-8}$
+
+#### 为什么需要 Bias Correction？
+
+这是 Adam 最大的特点。我们现在来通过数据举例分析：
+
+第一次：
+
+$$
+m_1=0\\
+g=10
+$$
+
+计算 $m_2$，根据现在的计算公式，计算得$0.9×0+0.1×10=1$。实际上，梯度明明是 10，但是 momentum计算只有1，明显偏小，因此，进行第一次修正：
+
+$$
+\hat{m_1} = \frac{m_1}{1-β_1} = \frac{1}{1-0.9}=10
+$$
+
+刚好恢复为梯度值。所以，Bias Correction 就是修正 EMA 初始偏小的问题的。
+
+可以将 Adam 理解为 Momentum + RMSProp + Bias Correction
+
+#### 代码实现
+
+```py
+class Adam:
+    def __init__(self, learning_rate=0.001, beta1=0.9, beta2=0.999):
+        self.lr = learning_rate
+        self.beta1 = beta1  # 一阶矩衰减率（动量）
+        self.beta2 = beta2  # 二阶矩衰减率（自适应）
+        self.iter = 0
+        self.m = None  # 一阶矩（动量）
+        self.v = None  # 二阶矩（自适应）
+
+    def update(self, params, grads):
+        if self.m is None:
+            self.m, self.v = {}, {}
+            for key in params.keys():
+                self.m[key] = np.zeros_like(params[key])
+                self.v[key] = np.zeros_like(params[key])
+                self.iter += 1
+        for key in params.keys():
+            # 1. 更新一阶矩（类似Momentum）
+            self.m[key] = self.beta1 * self.m[key] + (1 - self.beta1) * grads[key]
+            # 2. 更新二阶矩（类似AdaGrad）
+            self.v[key] = self.beta2 * self.v[key] + (1 - self.beta2) * grads[key] ** 2
+            # 3. 偏差修正（初始时避免偏向0）
+            m_hat = self.m[key] / (1 - self.beta1**self.iter)
+            v_hat = self.v[key] / (1 - self.beta2**self.iter)
+            # 4. 更新参数
+            params[key] -= self.lr * m_hat / (np.sqrt(v_hat) + 1e-7)
+```
+
+我们在等高线图中绘制学习路径：
+
+```py
+
+```
+
+![](./assets/Adam.png)
+
+### 6.1.8 各种优化器之间的关系
+
+| 优化器   | 保存的信息              | 是否自适应学习率 | 是否利用历史方向 | 是否偏差修正 |
+| -------- | ----------------------- | ---------------- | ---------------- | ------------ |
+| SGD      | 无                      | ❌               | ❌               | ❌           |
+| Momentum | 一阶矩 (m)              | ❌               | ✅               | ❌           |
+| AdaGrad  | 梯度平方累计            | ✅               | ❌               | ❌           |
+| RMSProp  | 二阶矩 (v)（EMA）       | ✅               | ❌               | ❌           |
+| **Adam** | 一阶矩 (m) + 二阶矩 (v) | ✅               | ✅               | ✅           |
+
+### 6.1.8 基于 MNIST 数据集的更新方法的比较
+
+我们通过实现多层神经网络，然后利用 MNIST 数据集进行误差计算，比较几个优化器在误差计算过程中的变化：
+
+首先来实现多层神经网络
+
+```py
+from collections import OrderedDict
+
+import numpy as np
+
+
+class Sigmoid:
+    def __init__(self):
+        self.out = None
+
+    def forward(self, x):
+        self.out = 1 / (1 + np.exp(-x))
+
+        return self.out
+
+    def backward(self, dout):
+        dx = dout * (1.0 - self.out) * self.out
+
+        return dx
+
+
+class ReLu:
+    def __init__(self):
+        self.mask = None
+
+    def forward(self, x):
+        self.mask = x <= 0
+        out = x.copy()
+        out[self.mask] = 0
+
+        return out
+
+    def backward(self, dout):
+        dx = dout.copy()
+        dx[self.mask] = 0
+
+        return dx
+
+
+class Affine:
+    def __init__(self, w, b):
+        self.w = w
+        self.b = b
+        self.x = None
+
+        # 用于后续进行参数更新时使用，w = w - dw，b = b - db
+        self.dw = None
+        self.db = None
+
+    def forward(self, x):
+        self.x = x
+        out = np.dot(self.x, self.w) + self.b
+
+        return out
+
+    def backward(self, dout):
+        dx = np.dot(dout, self.w.T)
+        self.dw = np.dot(self.x.T, dout)
+        self.db = np.sum(dout, axis=0)
+
+        return dx
+
+
+def softmax(x):
+    if x.ndim == 1:
+        x = x.reshape(1, len(x))
+    max_x = np.max(x, axis=1, keepdims=True)
+    normal_x = x - max_x
+    exp_x = np.exp(normal_x)
+
+    return exp_x / np.sum(exp_x, axis=1, keepdims=True)
+
+
+def cross_entropy_error(x, t):
+    if x.ndim == 1:
+        x = x.reshape(1, len(x))
+        t = t.reshape(1, len(t))
+    batch_size = t.shape[0]
+
+    return -np.sum(t * np.log(x + 1e-7)) / batch_size
+
+
+class SoftmaxWithLoss:
+    def __init__(self):
+        self.y = None
+        self.t = None
+        self.loss = None
+
+    def forward(self, x, t):
+        self.y = softmax(x)
+        self.t = t
+        self.loss = cross_entropy_error(self.y, t)
+
+        return self.loss
+
+    def backward(self, dout):
+        batch_size = self.t.shape[0]
+        return (self.y - self.t) / batch_size
+
+
+class MultiLayerNet:
+    def __init__(
+        self,
+        input_size,
+        hidden_size_list,
+        output_size,
+        activation="relu",
+        weight_init_std="relu",
+        weight_decay_lambda=0,
+    ):
+        self.input_size = input_size
+        self.output_size = output_size
+        self.hidden_size_list = hidden_size_list
+        self.hidden_layer_num = len(hidden_size_list)
+        self.weight_decay_lambda = weight_decay_lambda
+        self.params = {}
+
+        # 初始化参数
+        self.__init_weight(weight_init_std)
+
+        # 激活函数
+        activation_layer = {"sigmoid": Sigmoid, "relu": ReLu}
+        self.layers = OrderedDict()
+        for idx in range(1, self.hidden_layer_num + 1):
+            self.layers["Affine" + str(idx)] = Affine(
+                self.params["W" + str(idx)], self.params["b" + str(idx)]
+            )
+            self.layers["Activation_function" + str(idx)] = activation_layer[
+                activation
+            ]()
+        idx = self.hidden_layer_num + 1
+        self.layers["Affine" + str(idx)] = Affine(
+            self.params["W" + str(idx)], self.params["b" + str(idx)]
+        )
+
+        self.last_layer = SoftmaxWithLoss()
+
+    def __init_weight(self, weight_init_std):
+        """
+        初始化权重参数
+        """
+        all_size_list = [self.input_size] + self.hidden_size_list + [self.output_size]
+        for idx in range(1, len(all_size_list)):
+            scale = weight_init_std
+            if str(weight_init_std).lower() in ("relu", "he"):
+                scale = np.sqrt(2.0 / all_size_list[idx - 1])
+            elif str(weight_init_std).lower() in ("sigmoid", "xavier"):
+                scale = np.sqrt(1.0 / all_size_list[idx - 1])
+
+            self.params["W" + str(idx)] = scale * np.random.randn(
+                all_size_list[idx - 1], all_size_list[idx]
+            )
+            self.params["b" + str(idx)] = np.zeros(all_size_list[idx])
+
+    def predict(self, x):
+        for layer in self.layers.values():
+            x = layer.forward(x)
+
+        return x
+
+    def loss(self, x, t):
+        y = self.predict(x)
+        return self.last_layer.forward(y, t)
+
+    def accuracy(self, x, t):
+        y = self.predict(x)
+        y = np.argmax(y, axis=1)
+        if t.ndim != 1:
+            t = np.argmax(t, axis=1)
+
+        accuracy = np.sum(y == t) / float(x.shape[0])
+
+        return accuracy
+
+    def gradient(self, x, t):
+        # forward
+        loss = self.loss(x, t)
+
+        # backward
+        dout = 1
+        dout = self.last_layer.backward(dout)
+        for layer in reversed(self.layers.values()):
+            dout = layer.backward(dout)
+
+        grads = {}
+        for idx in range(1, self.hidden_layer_num + 2):
+            grads["W" + str(idx)] = self.layers["Affine" + str(idx)].dw
+            grads["b" + str(idx)] = self.layers["Affine" + str(idx)].db
+
+        return grads, loss
+```
+
+接下来使用 MNIST 数据集来训练各个优化器下的五层神经网络，并用折线图绘制各个优化器在每100轮训练之后的误差分布：
+
+```py
+import matplotlib.pyplot as plt
+import numpy as np
+from dataset.mnist import load_mnist
+from multi_layer_net import MultiLayerNet
+from optimizer import SGD, AdaGrad, Adam, Momentum, RMSProp
+
+
+def smooth_curve(x):
+    """用于平滑损失函数的图像。
+
+    参考：http://glowingpython.blogspot.jp/2012/02/convolution-with-numpy.html
+    """
+    window_len = 11
+    s = np.r_[x[window_len - 1 : 0 : -1], x, x[-1:-window_len:-1]]
+    w = np.kaiser(window_len, 2)
+    y = np.convolve(w / w.sum(), s, mode="valid")
+    return y[5 : len(y) - 5]
+
+
+if __name__ == "__main__":
+    (t_train, t_test), (x_train, x_test) = load_mnist(
+        normalize=True, one_hot_label=True
+    )
+    train_size = t_train.shape[0]
+    batch_size = 128
+    max_iterations = 2000
+
+    optimizers = {}
+    optimizers["SGD"] = SGD()
+    optimizers["Momentum"] = Momentum()
+    optimizers["AdaGrad"] = AdaGrad()
+    optimizers["RMSProp"] = RMSProp()
+    optimizers["Adam"] = Adam()
+
+    networks = {}
+    train_loss = {}
+    for key in optimizers.keys():
+        networks[key] = MultiLayerNet(
+            input_size=784, hidden_size_list=[100, 100, 100, 100], output_size=10
+        )
+        train_loss[key] = []
+
+    for i in range(max_iterations):
+        batch_mask = np.random.choice(train_size, batch_size)
+        x_batch, t_batch = t_train[batch_mask], t_test[batch_mask]
+
+        for key in optimizers.keys():
+            grads, loss = networks[key].gradient(x_batch, t_batch)
+            optimizers[key].update(networks[key].params, grads)
+            # loss = networks[key].loss(x_batch, t_batch)
+            train_loss[key].append(loss)
+
+        if i % 100 == 0:
+            print("===========" + "iteration:" + str(i) + "===========")
+            for key in optimizers.keys():
+                loss = networks[key].loss(x_batch, t_batch)
+                print(key + ":" + str(loss))
+
+    markers = {"SGD": "o", "Momentum": "x", "AdaGrad": "s", "RMSProp": "*", "Adam": "D"}
+    x = np.arange(max_iterations)
+    for key in optimizers.keys():
+        plt.plot(
+            x,
+            smooth_curve(train_loss[key]),
+            marker=markers[key],
+            markevery=100,
+            label=key,
+        )
+    plt.xlabel("iterations")
+    plt.ylabel("loss")
+    plt.ylim(0, 1)
+    plt.legend()
+    plt.show()
+```
+
+![](./assets/optimizer_compare.png)
+
+从图中可知，与 SGD 相比，其他 4 种方法学习的更快，并且速度基本相同，仔细看的话，AdaGrad的学习进行的稍微快一点。
