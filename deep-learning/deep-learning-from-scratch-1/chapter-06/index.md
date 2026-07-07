@@ -3,8 +3,8 @@
 目标：
 
 1. 理解神经网络的学习过程
-2. 理解并掌握SGD（stochastic ）等常用学习算法
-3. 掌握参数初始化的方法
+2. 理解并掌握SGD、Momentum、AdaGrad、REMProp 和 Adam 等常用学习算法
+3. 掌握std=0.01、Xavier初始化、He初始化等参数初始化的方法
 4. 理解并掌握正则化常用手法
 
 ## 6.1 参数的更新
@@ -1151,3 +1151,218 @@ if __name__ == "__main__":
 ![](./assets/optimizer_compare.png)
 
 从图中可知，与 SGD 相比，其他 4 种方法学习的更快，并且速度基本相同，仔细看的话，AdaGrad的学习进行的稍微快一点。
+
+## 6.2 权重的初始值
+
+在神经网络中，权重的初始值非常重要，甚至决定学习是否能够成功。
+
+### 6.2.1 可以将权重初始值都设为0吗
+
+答案是否定的。因为在误差反向传播中，所有权重值都会进行相同的更新。比如，在 2 层神经网络中，假设第 1 层和第 2 层的权重为 0。这样一来，正向传播时，因为输入层的权重为 0，所以第 2 层的神经元全部会被传递相同的值。第 2 层的神经元中全部输入相同的值，这意味着反向传播时第 2 层的权重全部都会进行相同的更新（回忆一下“乘法节点的反向传播”的内容）​。因此，权重被更新为相同的值，并拥有了对称的值（重复的值）​。这使得神经网络拥有许多不同的权重的意义丧失了。为了防止“权重均一化”​（严格地讲，是为了瓦解权重的对称结构）​，必须随机生成初始值。
+
+### 6.2.2 隐藏层的激活值的分布
+
+观察隐藏层的激活值（激活函数的输出数据）的分布，可以获得很多启发。
+
+```py
+import matplotlib.pyplot as plt
+import numpy as np
+
+# 探索 权重初始值 与激活函数的输出值的分布关系
+
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+
+x = np.random.randn(1000, 100)  # 模拟 1000 个输入数据
+node_num = 100  # 设置隐藏层神经元个数 100
+hidden_layer_size = 5  # 设置 5 层神经元
+activations = {}  # 记录每一层的激活函数
+
+for i in range(hidden_layer_size):
+    if i != 0:
+        x = activations[i - 1]
+
+    # 设置每层的权重分布都是 100 * 100，且初始值都为 1
+    w = np.random.randn(node_num, node_num) * 1
+
+    z = np.dot(x, w)
+    a = sigmoid(z)
+    activations[i] = a
+
+# 绘制直方图
+for i, a in activations.items():
+    plt.subplot(1, len(activations), i + 1)
+    plt.title(str(i + 1) + "-layer")
+    plt.hist(a.flatten(), 30, range=(0, 1))
+plt.show()
+```
+
+分布如下图所示：
+
+![](./assets/weight_init_histogram_1.png)
+
+从上图可知，各层的激活值呈偏向 0 和 1 的分布。这里使用的 sigmoid 函数是 S 型函数，随着输出不断地靠近 0（或者靠近 1）​，它的导数的值逐渐接近 0。因此，偏向 0 和 1 的数据分布会造成反向传播中梯度的值不断变小，最后消失。这个问题称为**梯度消失（Gradient Vanishing）**。层次加深的深度学习中，梯度消失的问题可能会更加严重。
+
+下面，我们将权重的标准差设为 0.01，进行相同的实验。分布如下图所示：
+
+![](./assets/weight_init_histogram_2.png)
+
+这次呈集中在 0.5 附近的分布。因为不像刚才的例子那样偏向 0 和 1 ，所以不会发生梯度消失的问题。但是，激活值的分布有所偏向，说明在表现力上会有很大问题。为什么这么说呢？因为如果有多个神经元都输出几乎相同的值，那它们就没有存在的意义了。比如，如果 100 个神经元都输出几乎相同的值，那么也可以由 1 个神经元来表达基本相同的事情。因此，激活值在分布上有所偏向会出现“表现力受限”的问题。
+
+接下来我们尝试使用 “Xavier 初始值” 初始化权重参数，再来观察激活函数输出值的分布。为了使各层的激活值呈现出具有相同广度的分布，“Xavier 初始值”推导出了一套合适的权重尺度。推导出的结论是，如果前一层的节点数为 n，则初始值使用标准差为 $\frac{1}{\sqrt{n}}$的分布。
+
+分布结果如下如所示：
+
+![](./assets/weight_init_histogram_3.png)
+
+从这个结果可知，越是后面的层，图像变得越歪斜，但是呈现了比之前更有广度的分布。因为各层间传递的数据有适当的广度，所以 sigmoid 函数的表现力不受限制，有望进行高效的学习。
+
+### 6.2.3 ReLU的权重初始值
+
+Xavier初始值是以激活函数是线性函数为前提而推导出来的。因为 sigmoid 函数和 tanh 函数左右对称，且中央附近可以视作线性函数，所以适合使用 Xavier初始值。但当激活函数使用ReLU时，一般推荐使用 ReLU 专用的初始值，也就是Kaiming He等人推荐的初始值，也称为“He初始值”。当前一层节点数为 n 时，He初始值使用标准差为 $\sqrt{\frac{2}{n}}$ 的高斯分布。
+
+我们来编写程序使用直方图展示权重参数初始值为不同标准差时，激活函数输出值的分布图：
+
+```py
+import matplotlib.pyplot as plt
+import numpy as np
+
+# 探索 权重初始值 与激活函数的输出值的分布关系
+
+
+def relu(x):
+    return np.maximum(0, x)
+
+
+x = np.random.randn(1000, 100)
+node_num = 100
+hidden_layer_size = 5
+
+scales = {
+    "std=0.01": lambda: 0.01,
+    "Xavier": lambda: np.sqrt(1.0 / node_num),
+    "He": lambda: np.sqrt(2.0 / node_num),
+}
+
+plt.figure(figsize=(9, 6))
+for row, (name, scale_func) in enumerate(scales.items()):
+    layer_input = x
+    for col in range(hidden_layer_size):
+        w = np.random.randn(node_num, node_num) * scale_func()
+        z = np.dot(layer_input, w)
+        a = relu(z)
+        ax = plt.subplot(
+            len(scales), hidden_layer_size, row * hidden_layer_size + col + 1
+        )
+        ax.hist(a.flatten(), bins=30, range=(0, 1.5))
+        ax.set_title(f"{col + 1}-layer" if row == 0 else "")
+        # 动态设置 y 轴刻度
+        y_lim = ax.get_ylim()
+        step = 10000
+        y_ticks = np.arange(0, y_lim[1] + step, step)
+        ax.set_yticks(y_ticks)
+        layer_input = a
+        ax.set_ylabel(name)  # 在每行最左侧加标签（可通过 subplot 定位，这里简单演示）
+
+plt.tight_layout()
+plt.show()
+```
+
+现在统一使用 ReLU 作为激活函数，使用 std=0.01、Xavier初始值、He初始值作为权重初始值的平方差，下面是具体的计算的直方图：
+
+![](./assets/weight_init_compare_histogram.png)
+
+观察实验结果可知，当“std = 0.01”时，各层的激活值非常小。神经网络上传递的是非常小的值，说明逆向传播时权重的梯度也同样很小。这是很严重的问题，实际上学习基本上没有进展。
+
+接下来是初始值为Xavier初始值时的结果。在这种情况下，随着层的加深，偏向一点点变大。实际上，层加深后，激活值的偏向变大，学习时会出现梯度消失的问题。而当初始值为He初始值时，各层中分布的广度相同。由于即便层加深，数据的广度也能保持不变，因此逆向传播时，也会传递合适的值。
+
+总结一下，当激活函数使用ReLU时，权重初始值使用He初始值，当激活函数为sigmoid或tanh等S型曲线函数时，初始值使用Xavier初始值。这是目前的最佳实践。
+
+### 6.2.4 基于 MNIST 数据集的权重处置值的比较
+
+下面通过实际的数据，观察不同的权重初始值的赋值方法会在多大程度上影响神经网络的学习。
+
+```py
+import matplotlib.pyplot as plt
+import numpy as np
+from dataset.mnist import load_mnist
+from multi_layer_net import MultiLayerNet
+from optimizer import SGD
+
+
+def smooth_curve(x):
+    """用于平滑损失函数的图像。
+
+    参考：http://glowingpython.blogspot.jp/2012/02/convolution-with-numpy.html
+    """
+    window_len = 11
+    s = np.r_[x[window_len - 1 : 0 : -1], x, x[-1:-window_len:-1]]
+    w = np.kaiser(window_len, 2)
+    y = np.convolve(w / w.sum(), s, mode="valid")
+    return y[5 : len(y) - 5]
+
+
+if __name__ == "__main__":
+    (t_train, t_test), (x_train, x_test) = load_mnist(
+        normalize=True, one_hot_label=True
+    )
+    train_size = t_train.shape[0]
+    batch_size = 128
+    max_iterations = 2000
+
+    weight_init_types = {"std=0.01": 0.01, "Xavier": "sigmoid", "He": "relu"}
+    optimizer = SGD(learning_rate=0.01)
+
+    networks = {}
+    train_loss = {}
+    for key, weight_type in weight_init_types.items():
+        networks[key] = MultiLayerNet(
+            input_size=784,
+            hidden_size_list=[100, 100, 100, 100],
+            output_size=10,
+            weight_init_std=weight_type,
+        )
+        train_loss[key] = []
+
+    for i in range(max_iterations):
+        batch_mask = np.random.choice(train_size, batch_size)
+        x_batch, t_batch = t_train[batch_mask], t_test[batch_mask]
+
+        for key in weight_init_types.keys():
+            grads, loss = networks[key].gradient(x_batch, t_batch)
+            optimizer.update(networks[key].params, grads)
+            # loss = networks[key].loss(x_batch, t_batch)
+            train_loss[key].append(loss)
+
+        if i % 100 == 0:
+            print("===========" + "iteration:" + str(i) + "===========")
+            for key in weight_init_types.keys():
+                loss = networks[key].loss(x_batch, t_batch)
+                print(key + ":" + str(loss))
+
+    markers = {"std=0.01": "o", "Xavier": "s", "He": "D"}
+    x = np.arange(max_iterations)
+    for key in weight_init_types.keys():
+        plt.plot(
+            x,
+            smooth_curve(train_loss[key]),
+            marker=markers[key],
+            markevery=100,
+            label=key,
+        )
+    plt.xlabel("iterations")
+    plt.ylabel("loss")
+    plt.ylim(0, 2.5)
+    plt.legend()
+    plt.show()
+```
+
+不同初始值的损失值分布图如下图所示：
+
+![](./assets/weight_init_compare.png)
+
+在这个实验中，神经网络有 5 层，每层有 100 个神经元，激活函数使用的是 ReLU。从上图可以看出，std = 0.01时完全无法进行学习。这和刚才观察到的激活值的分布一样，是因为正向传播中传递的值很小（集中在0附近的数据）​。因此，逆向传播时求到的梯度也很小，权重几乎不进行更新。相反，当权重初始值为Xavier初始值和He初始值时，学习进行得很顺利。并且，我们发现He初始值时的学习进度更快一些。
+
+综上，在神经网络的学习中，权重初始值非常重要。很多时候权重初始值的设定关系到神经网络的学习能否成功。权重初始值的重要性容易被忽视，而任何事情的开始（初始值）总是关键的，因此在结束本节之际，再次强调一下权重初始值的重要性。

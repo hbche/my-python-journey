@@ -142,7 +142,9 @@ class MultiLayerNet:
         for idx in range(1, len(all_size_list)):
             scale = weight_init_std
             if str(weight_init_std).lower() in ("relu", "he"):
+                # 针对激活函数是 ReLU 的场景，使用 He 初始化参数
                 scale = np.sqrt(2.0 / all_size_list[idx - 1])
+                # 针对激活函数是 Sigmoid 的场景，使用 Xavier 初始化参数
             elif str(weight_init_std).lower() in ("sigmoid", "xavier"):
                 scale = np.sqrt(1.0 / all_size_list[idx - 1])
 
