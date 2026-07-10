@@ -99,3 +99,14 @@ def most_similarity(query, word_to_id, id_to_word, word_matrix, top=5):
         count += 1
         if count >= top:
             return
+
+
+def ppmi(C, verbose=False, eps=1e-8):
+    """
+    将共现矩阵转换为 PPMI矩阵
+    """
+    # 初始化 PPMI矩阵
+    M = np.zeros_like(C, dtype=np.float32)
+    # 计算所有单词的总数
+    N = np.sum(C)
+    S = np.sum(C, axis=0)

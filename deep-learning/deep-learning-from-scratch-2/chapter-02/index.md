@@ -141,6 +141,8 @@ def create_co_matrix(corpus, vocab_size, windows_size=1):
     return co_matrix
 ```
 
+上述实现进行了一个取巧，将词汇的ID作为矩阵的行号，借助ID计算词汇在矩阵中的位置。
+
 无论语料库多大，都可以自动生成共现矩阵。
 
 ### 2.3.5 向量间的相似度
@@ -240,6 +242,8 @@ def most_similarity(query, word_to_id, id_to_word, word_matrix, top=5):
             return
 ```
 
+上述实现利用 `np.argsort` 函数进行取巧操作，通过乘以 `-1` 来实现相似度值倒序排序。
+
 下面我们来测试上面的方法：
 
 ```py
@@ -271,3 +275,34 @@ most_similarity("you", word_to_id, id_to_word, co_matrix, top=5)
 $$
 PMI(x, y)=\log_{2}\frac{P(x, y)}{P(x)P(y)}
 $$
+
+其中，$P(x)$ 表示 x 发生的概率，$P(y)$表示 y 发生的概率，$P(x, y)$表示 x 和 y 同时发生的概率。PMI 值越高，表明相关性越强。
+
+在自然语言的例子中，$P(x)$ 就是单词 x 在语料库中出现的概率。假设某个语料库中有 10000 个单词，其中单词 `the` 出现了 100 次，则 $P("the")=\frac{100}{10000}=0.01$。另外，$P(x, y)$ 表示单词 x 和 y 同时出现的概率。例如，单词 `the` 和 `car` 同时出现的概率为10，则 $P("the", "car")=\frac{10}{10000}=0.001$。
+
+现在我们来使用共现矩阵重写上述公式。这里将共现矩阵表示为 C，将单词 x 和 y 的共现次数表示为 $C(x, y)$，将单词 x 和 y 的出现次数分别表示为 $C(x)$ 和 $C(y)$，将语料库的单词数量记为 N，则上述表达式可以重写为：
+
+$$
+PMI(x, y)=\log_{w}{\frac{P(x, y)}{P(x)P(y)}}=\log_2{\frac{\frac{C(x, y)}{N}}{\frac{C(x)C(y)}{N}}}=\frac{C(x, y)\cdot{N}}{C(x)C(y)}
+$$
+
+假设我们语料库的单词数量（N）为 10000，the 出现 1000 次，car 出现 20 次，drive 出现 10 次， the 和 car 共出现 10 次，car 和 drive 共现 5 次。这时，如果从共现次数的角度来看，则与 drive 比，the 和 car 的相关性更强。而如果从 PMI 的角度来看：
+
+$$
+PMI("the", "car")=\log_2{\frac{10 * 10000}{1000 * 20}}\approx 2.32\\
+PMI("drive", "car")=\log_2{\frac{5 * 10000}{10 * 20}}\approx 7.97
+$$
+
+结果表明，在使用 PMI 的情况下，与 the 相比，drive 与 car 的相关性更强。这是我们想要的结果，之所以出现这个结果，是因为我们考虑了单词单独出现的次数。在这个例子中，因为 the 本身出现得多，所以 PMI 的得分被拉低了。
+
+虽然我们已经获得了 PMI 这样一个好的指标，但是 PMI 也有一个问题。那就是当两个单词的共现次数为 0 时，$\log_2{0}=-\infin$。为了解决这个问题，实践上我们会使用下述**正的点互信息(Positive PMI, PPMI)**。
+
+$$
+PPMI(x, y)=max(0, PMI(x, y))
+$$
+
+当 PMI 为负数时，PPMI 为 0，这样就可以将单词间的相关性表示为大于等于 0 的实数。下面，我们来实现将共现矩阵转化为 PPMI矩阵的函数。
+
+``` py
+
+```
