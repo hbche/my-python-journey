@@ -109,4 +109,19 @@ def ppmi(C, verbose=False, eps=1e-8):
     M = np.zeros_like(C, dtype=np.float32)
     # 计算所有单词的总数
     N = np.sum(C)
+    # 计算每个单词出现的次数
     S = np.sum(C, axis=0)
+    total = C.shape[0] * C.shape[1]
+    cnt = 0
+
+    for i in range(C.shape[0]):
+        for j in range(C.shape[1]):
+            pmi = np.log((M[i, j] * N) / (S[i] * S[j]) + eps)
+            M[i, j] = max(0, pmi)
+
+            if verbose:
+                cnt += 1
+                if cnt % (total // 100 + 1) == 0:
+                    print("%.1f%% done" % (100 * cnt / total))
+
+    return M
