@@ -1,6 +1,18 @@
 import numpy as np
 
 
+def clip_grads(grads, max_norm):
+    total_norm = 0
+    for grad in grads:
+        total_norm += np.sum(grad * grad)
+    total_norm = np.sqrt(total_norm)
+
+    rate = max_norm / (total_norm + 1e-6)
+    if rate < 1:
+        for grad in grads:
+            grad *= rate
+
+
 def preprocess(message):
     """
     将 message 语句转换成语料库
@@ -125,3 +137,46 @@ def ppmi(C, verbose=False, eps=1e-8):
                     print("%.1f%% done" % (100 * cnt / total))
 
     return M
+
+
+def create_contexts_target(corpus, vocab_size, window_size=1):
+    """
+    根据语料ID列表、词汇量和窗口大小生成每个预料词汇对应的上下文词汇列表和目标词汇
+    """
+    target = corpus[window_size:-window_size]
+    contexts = []
+
+    for idx in range(window_size, len(corpus) - window_size):
+        cs = []
+        for t in range(-window_size, window_size + 1):
+            if t == 0:
+                continue
+            cs.append(corpus[idx + t])
+        contexts.append(cs)
+
+    return np.array(contexts), np.array(target)
+
+
+def convert_one_hot(corpus, vocab_size):
+    """
+    one-hoe转换，需要考虑二维场景
+    : param corpus:
+    : param vocab_size:
+    : return: ont-hot 表示
+    """
+    N = corpus.shape[0]
+
+    if corpus.ndim == 1:
+        one_hot = np.zeros((N, vocab_size), dtype=np.int32)
+        # 遍历语料中的每个词汇，根据词汇ID更新one
+        for idx, word_id in enumerate(corpus):
+            one_hot[idx, word_id] = 1
+
+    elif corpus.ndim == 2:
+        C = corpus.shape[1]
+        one_hot = np.zeros((N, C, vocab_size), dtype=np.int32)
+        for idx_0, word_ids in enumerate(corpus):
+            for idx_1, word_id in enumerate(word_ids):
+                one_hot[idx_0, idx_1, word_id] = 1
+
+    return one_hot
