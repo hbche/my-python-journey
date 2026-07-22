@@ -13,7 +13,7 @@ def softmax(x):
     if x.ndim == 2:
         x = x - x.max(axis=1, keepdims=True)
         x = np.exp(x)
-        x /= np.sum(x, axis=1, keepndims=True)
+        x /= np.sum(x, axis=1, keepdims=True)
     elif x.ndim == 1:
         x = x - np.max(x)
         x = np.exp(x)

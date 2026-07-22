@@ -1,11 +1,11 @@
 import numpy as np
-from functions import cross_entropy_error, softmax
+from common.functions import cross_entropy_error, softmax
 
 
 class MatMul:
     def __init__(self, W):
         self.params = [W]
-        self.grads = []
+        self.grads = [np.zeros_like(W)]
 
     def forward(self, x):
         [W] = self.params
@@ -44,7 +44,7 @@ class SoftmaxWithLoss:
         batch_size = self.t.shape[0]
 
         dx = self.y.copy()
-        dx[np.range(batch_size, self.t)] -= 1
+        dx[np.arange(batch_size), self.t] -= 1
         dx *= dout
         dx = dx / batch_size
 

@@ -66,7 +66,7 @@ class RMSProp:
             # 按照一定比例计算
             self.h[i] *= self.decay_rate
             self.h[i] += (1 - self.decay_rate) * grads[i] * grads[i]
-            params[i] -= self.grads[i] * self.lr / (np.sqrt(self.h[i]) + 1e-7)
+            params[i] -= grads[i] * self.lr / (np.sqrt(self.h[i]) + 1e-7)
 
 
 class Adam:

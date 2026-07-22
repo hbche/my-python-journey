@@ -14,16 +14,17 @@ max_epoch = 1000
 # 数据预处理
 text = "You say goodbye and i say hello."
 corpus, word_to_id, id_to_word = preprocess(text)
+vocab_size = len(word_to_id)
 # 创建上下文及目标向量
-contexts, target = create_contexts_target(
-    corpus, vocab_size=len(word_to_id), window_size=window_size
-)
+contexts, target = create_contexts_target(corpus, vocab_size, window_size=window_size)
 # 转换为 ont-hot 形式
-contexts = convert_one_hot(contexts)
-target = convert_one_hot(target)
+contexts = convert_one_hot(contexts, vocab_size)
+target = convert_one_hot(target, vocab_size)
+print("contexts shape: ", contexts.shape)
+print("target shape: ", target.shape)
 
 # 初始化模型
-model = SimpleCBOW()
+model = SimpleCBOW(vocab_size, hidden_size)
 optimizer = Adam()
 trainer = Trainer(model, optimizer)
 

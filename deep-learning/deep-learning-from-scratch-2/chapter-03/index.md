@@ -387,4 +387,248 @@ def backward(self, dout=1):
 
 至此，反向传播的实现就结束了。我们已经将各个权重参数的梯度保存在了成员变量grads中。因此，通过先调用 `forward()` 函数，再调用 `backward()` 函数，grads列表中的梯度被更新。下面，我们继续看一下SimpleCBOW类的学习。
 
+```py
+import sys
 
+sys.path.append("../..")
+from common.optimizer import Adam
+from common.trainer import Trainer
+from common.util import convert_one_hot, create_contexts_target, preprocess
+from simple_cbow import SimpleCBOW
+
+window_size = 1
+hidden_size = 5
+barch_size = 3
+max_epoch = 1000
+
+# 数据预处理
+text = "You say goodbye and i say hello."
+corpus, word_to_id, id_to_word = preprocess(text)
+vocab_size = len(word_to_id)
+# 创建上下文及目标向量
+contexts, target = create_contexts_target(corpus, vocab_size, window_size=window_size)
+# 转换为 ont-hot 形式
+contexts = convert_one_hot(contexts, vocab_size)
+target = convert_one_hot(target, vocab_size)
+print("contexts shape: ", contexts.shape)
+print("target shape: ", target.shape)
+
+# 初始化模型
+model = SimpleCBOW(vocab_size, hidden_size)
+optimizer = Adam()
+trainer = Trainer(model, optimizer)
+
+# 开始训练
+trainer.fit(contexts, target, max_epoch, barch_size)
+trainer.plot()
+
+word_vecs = model.word_vecs
+# 输出每个单词的分布式向量
+for word_id, word in id_to_word.items():
+    print(word, word_vecs[word_id])
+```
+
+下面是封装了模型推理和学习的逻辑类 Trainer 的具体实现：
+
+```py
+# coding: utf-8
+import sys
+
+sys.path.append("..")
+import time
+
+import matplotlib.pyplot as plt
+import numpy
+import numpy as np
+from common.util import clip_grads
+
+
+class Trainer:
+    def __init__(self, model, optimizer):
+        self.model = model
+        self.optimizer = optimizer
+        self.loss_list = []
+        self.eval_interval = None
+        self.current_epoch = 0
+
+    def fit(self, x, t, max_epoch=10, batch_size=32, max_grad=None, eval_interval=20):
+        data_size = len(x)
+        max_iters = data_size // batch_size
+        self.eval_interval = eval_interval
+        model, optimizer = self.model, self.optimizer
+        total_loss = 0
+        loss_count = 0
+
+        start_time = time.time()
+        for epoch in range(max_epoch):
+            # 打乱数据，生成索引
+            idx = numpy.random.permutation(numpy.arange(data_size))
+            x = x[idx]
+            t = t[idx]
+
+            for iters in range(max_iters):
+                batch_x = x[iters * batch_size : (iters + 1) * batch_size]
+                batch_t = t[iters * batch_size : (iters + 1) * batch_size]
+
+                # 计算梯度并更新参数
+                loss = model.forward(batch_x, batch_t)
+                model.backward()
+                params, grads = remove_duplicate(
+                    model.params, model.grads
+                )  # 将共享的权重合并为一个
+                if max_grad is not None:
+                    clip_grads(grads, max_grad)
+                optimizer.update(params, grads)
+                total_loss += loss
+                loss_count += 1
+
+                # 评估
+                if (eval_interval is not None) and (iters % eval_interval) == 0:
+                    avg_loss = total_loss / loss_count
+                    elapsed_time = time.time() - start_time
+                    print(
+                        "| epoch %d |  iter %d / %d | time %d[s] | loss %.2f"
+                        % (
+                            self.current_epoch + 1,
+                            iters + 1,
+                            max_iters,
+                            elapsed_time,
+                            avg_loss,
+                        )
+                    )
+                    self.loss_list.append(float(avg_loss))
+                    total_loss, loss_count = 0, 0
+
+            self.current_epoch += 1
+
+    def plot(self, ylim=None):
+        x = numpy.arange(len(self.loss_list))
+        if ylim is not None:
+            plt.ylim(*ylim)
+        plt.plot(x, self.loss_list, label="train")
+        plt.xlabel("iterations (x" + str(self.eval_interval) + ")")
+        plt.ylabel("loss")
+        plt.show()
+
+
+def remove_duplicate(params, grads):
+    """
+    将参数列表中重复的权重合并为一个，
+    并将对应的梯度相加
+    """
+    params, grads = params[:], grads[:]  # copy list
+
+    while True:
+        find_flg = False
+        L = len(params)
+
+        for i in range(0, L - 1):
+            for j in range(i + 1, L):
+                # 当权重共享时
+                if params[i] is params[j]:
+                    grads[i] += grads[j]  # 将梯度相加
+                    find_flg = True
+                    params.pop(j)
+                    grads.pop(j)
+                # 当以转置矩阵共享权重（weight tying）时
+                elif (
+                    params[i].ndim == 2
+                    and params[j].ndim == 2
+                    and params[i].T.shape == params[j].shape
+                    and np.all(params[i].T == params[j])
+                ):
+                    grads[i] += grads[j].T
+                    find_flg = True
+                    params.pop(j)
+                    grads.pop(j)
+
+                if find_flg:
+                    break
+            if find_flg:
+                break
+
+        if not find_flg:
+            break
+
+    return params, grads
+```
+
+运行上面的训练代码，结果如下如所示：
+
+![](./assets/CBOW_train_plot.png)
+
+通过不断学习，损失在减小，看起来学习进行得一切正常。我们来看一下学习结束后的权重参数。这里，我们取出输入侧的MatMul层的权重，实际确认一下它的内容。因为输入侧的MatMul层的权重已经赋值给了成员变量`word_vecs`，所以我来看下最后词汇的分布式向量。
+
+```
+you [-0.08733296 -1.020371   -0.16142899 -1.818681    1.2386943 ]
+say [ 1.0642354   0.7097241  -0.16768804  0.30489644 -0.05277122]
+goodbye [ 0.14895093 -2.1027763   3.0464327   0.2150275   1.8741611 ]
+and [ 1.3632429   0.1346582  -1.0137464   0.98772806 -1.8128741 ]
+i [ 0.80219644 -1.6355501   0.819029    1.634943   -0.36167252]
+hello [-2.6642544  -2.180111    0.09655147 -0.55213857 -0.5050689 ]
+. [ 1.5807176  1.0261713 -1.4504613 -0.8537835  1.2824849]
+```
+
+我们终于将单词表示为了密集向量！这就是单词的分布式表示。我们有理由相信，这样的分布式表示能够很好地捕获单词含义。
+
+不过，遗憾的是，这里使用的小型语料库并没有给出很好的结果。当然，主要原因是语料库太小了。如果换成更大、更实用的语料库，相信会获得更好的结果。但是，这样在处理速度方面又会出现新的问题，这是因为当前这个CBOW模型的实现在处理效率方面存在几个问题。
+
+## 3.5 word2ve的补充说明
+
+我们下面从概率的角度，再来看一下 CBOW 模型。
+
+### 3.5.1 CBOW模型和概率
+
+首先简单说明一下概率的表示方法。比如事件A发生的概率记为`P(A)`​。联合概率记为`P(A, B)`​，表示事件A和事件B同时发生的概率。
+
+后验概率即为`P(A|B)`，字面意思是“事件发生后的概率”​。从另一个角度来看，也可以解释为“在给定事件B（的信息）时事件A发生的概率”​。
+
+下面，我们用概率的表示方法来描述CBOW模型。CBOW模型进行的处理是，当给定某个上下文时，输出目标词的概率。这里，我们使用包含单词$w_1, w_2,···, w_T$的语料库。现在针对第t个单词，考虑窗口大小为1的上下文。
+
+$$
+w_{1} w_{2} w_{3} ... w_{t-1} [w_{t}] w_{t+1} ... w_{T-1} w_T
+$$
+
+下面，我们用数学式来表示当给定上下文$w_{t-1}$和$w_{t+1}$时目标词为$w_{t}$的概率。使用后验概率，有式（3.1）​：
+
+$$
+P(w_t|w_{t-1}, w_{t+1})
+$$
+
+上述概率计算表示“当$w_{t-1}$和$w_{t+1}$发生后，$w_t$发生的概率”，也可以解释为“当给定$w_{t-1}$和$w_{t+1}$时，$w_t$发生的概率”。也就是说，CBOW模型可以按照上述计算公式建模。
+
+这里，使用式（3.1）可以简洁地表示CBOW模型的损失函数。我们把第1章介绍的交叉熵误差函数（式（1.7）​）套用在这里。式（1.7）是$L=-\sum_k{t_k\log{y_k}}$，其中，$y_k$表示第k个事件发生的概率。$t_k$是监督标签，它是one-hot向量的元素。这里需要注意的是，​“$w_t$发生”这一事件是正确解，它对应的one-hot向量的元素是1，其他元素都是0（也就是说，当$w_t$之外的事件发生时，对应的one-hot向量的元素均为0）​。考虑到这一点，可以推导出下式：
+
+$$
+L=-\log{P(w_t|w_{t-1},w_{t+1})}
+$$
+
+CBOW模型的损失函数只是对式（3.1）的概率取log，并加上负号。顺便提一下，这也称为负对数似然（negative log likelihood）​。式（3.2）是一笔样本数据的损失函数。如果将其扩展到整个语料库，则损失函数可以写为：
+
+$$
+L=-\frac{1}{T}\sum_{t=1}^{T}log{P(w_t|w_{t-1}, w_{t+1})}
+$$
+
+CBOW模型学习的任务就是让式（3.3）表示的损失函数尽可能地小。那时的权重参数就是我们想要的单词的分布式表示。
+
+这里，我们只考虑了窗口大小为1的情况，不过其他的窗口大小（或者窗口大小为m的一般情况）也很容易用数学式表示。
+
+### 3.5.2 skip-gram 模型
+
+如前所述，word2vec有两个模型：一个是我们已经讨论过的CBOW模型；另一个是被称为skip-gram的模型。skip-gram是反转了CBOW模型处理的上下文和目标词的模型。
+
+```
+? say ? and i say hello.
+```
+
+如上图所示，CBOW模型从上下文的多个单词预测中间的单词（目标词），而 skip-gram 模型则从中间的单词（目标词）预测周围的多个单词（上下文）。此时，skip-grap模型的网络结构如下图所示：
+
+![](./assets/skip-gram-model.png)
+
+由上图可知，skip-gram模型的输入层只有一个，输出层的数量则与上下文的单词个数相等。因此，首先要分别求出各个输出层的损失（通过 SoftmaxWithLoss 层等），然后将它们加起来作为最后的损失。
+
+``` py
+
+```
+
+现在，我们使用概率的表示方法来表示skip-gram模型。

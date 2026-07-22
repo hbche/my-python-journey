@@ -1,8 +1,13 @@
+# coding: utf-8
+import sys
+
+sys.path.append("..")
 import time
 
 import matplotlib.pyplot as plt
+import numpy
 import numpy as np
-from util import clip_grads
+from common.util import clip_grads
 
 
 class Trainer:
@@ -15,33 +20,29 @@ class Trainer:
 
     def fit(self, x, t, max_epoch=10, batch_size=32, max_grad=None, eval_interval=20):
         data_size = len(x)
-        # 根据总数和批量大小计算最大迭代次数
         max_iters = data_size // batch_size
-        self.eval_interval = self.eval_interval
+        self.eval_interval = eval_interval
         model, optimizer = self.model, self.optimizer
         total_loss = 0
         loss_count = 0
 
         start_time = time.time()
-        # 根据 epoch 进行迭代
         for epoch in range(max_epoch):
-            # 打乱数据，生成数据索引
-            idx = np.random.permutation(np.range(batch_size))
-            # 根据数据索引重新生成数据
+            # 打乱数据，生成索引
+            idx = numpy.random.permutation(numpy.arange(data_size))
             x = x[idx]
             t = t[idx]
 
-            # 针对当前 epoch 进行训练的迭代次数
             for iters in range(max_iters):
                 batch_x = x[iters * batch_size : (iters + 1) * batch_size]
                 batch_t = t[iters * batch_size : (iters + 1) * batch_size]
 
-                # 计算损失
-                # 正向传播
+                # 计算梯度并更新参数
                 loss = model.forward(batch_x, batch_t)
-                # 反向传播
                 model.backward()
-                params, grads = remove_duplicate(model.params, model.grads)
+                params, grads = remove_duplicate(
+                    model.params, model.grads
+                )  # 将共享的权重合并为一个
                 if max_grad is not None:
                     clip_grads(grads, max_grad)
                 optimizer.update(params, grads)
@@ -68,19 +69,19 @@ class Trainer:
             self.current_epoch += 1
 
     def plot(self, ylim=None):
-        x = np.arange(len(self.loss_list))
+        x = numpy.arange(len(self.loss_list))
         if ylim is not None:
             plt.ylim(*ylim)
         plt.plot(x, self.loss_list, label="train")
-        plt.xlabel(f"iterations {self.eval_interval}")
+        plt.xlabel("iterations (x" + str(self.eval_interval) + ")")
         plt.ylabel("loss")
         plt.show()
 
 
 def remove_duplicate(params, grads):
     """
-    パラメータ配列中の重複する重みをひとつに集約し、
-    その重みに対応する勾配を加算する
+    将参数列表中重复的权重合并为一个，
+    并将对应的梯度相加
     """
     params, grads = params[:], grads[:]  # copy list
 
@@ -90,13 +91,13 @@ def remove_duplicate(params, grads):
 
         for i in range(0, L - 1):
             for j in range(i + 1, L):
-                # 重みを共有する場合
+                # 当权重共享时
                 if params[i] is params[j]:
-                    grads[i] += grads[j]  # 勾配の加算
+                    grads[i] += grads[j]  # 将梯度相加
                     find_flg = True
                     params.pop(j)
                     grads.pop(j)
-                # 転置行列として重みを共有する場合（weight tying）
+                # 当以转置矩阵共享权重（weight tying）时
                 elif (
                     params[i].ndim == 2
                     and params[j].ndim == 2

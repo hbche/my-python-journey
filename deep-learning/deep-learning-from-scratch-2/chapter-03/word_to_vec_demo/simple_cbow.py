@@ -20,6 +20,8 @@ class SimpleCBOW:
         self.loss_layer = SoftmaxWithLoss()
 
         # 将所有的权重和梯度都整理到列表中
+        self.params = []
+        self.grads = []
         layers = [self.in_layer0, self.in_layer1, self.out_layer]
         for layer in layers:
             self.params += layer.params
@@ -39,7 +41,7 @@ class SimpleCBOW:
 
     def backward(self, dout=1):
         ds = self.loss_layer.backward(dout)
-        da = self.out_layer.forward(ds)
+        da = self.out_layer.backward(ds)
         da *= 0.5
         self.in_layer0.backward(da)
         self.in_layer1.backward(da)
