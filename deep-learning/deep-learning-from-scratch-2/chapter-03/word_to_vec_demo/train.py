@@ -4,7 +4,7 @@ sys.path.append("../..")
 from common.optimizer import Adam
 from common.trainer import Trainer
 from common.util import convert_one_hot, create_contexts_target, preprocess
-from simple_cbow import SimpleCBOW
+from simple_skip_gram import SimpleSkipGram
 
 window_size = 1
 hidden_size = 5
@@ -24,7 +24,7 @@ print("contexts shape: ", contexts.shape)
 print("target shape: ", target.shape)
 
 # 初始化模型
-model = SimpleCBOW(vocab_size, hidden_size)
+model = SimpleSkipGram(vocab_size, hidden_size)
 optimizer = Adam()
 trainer = Trainer(model, optimizer)
 
